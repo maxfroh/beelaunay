@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { randInt } from 'three/src/math/MathUtils.js';
-import { BEE_COLLECTION_TIME, MIN_PER_DAY } from './parameters';
+import { BEE_COLLECTION_TIME, MIN_PER_DAY, RECOUP_TIME, BEE_COLLECTION_RATE } from './parameters';
 
 
 export class Location {
@@ -59,7 +59,7 @@ export class Patch extends Location {
         this.mesh.position.copy(this.position);
         this.mesh.rotation.x = -Math.PI / 2
 
-        this.nectarBaseLevel = randInt(2, 3) * this.radius;
+        this.nectarBaseLevel = randInt(6, 8) * this.radius;
         this.nectarLevel = this.nectarBaseLevel;
         this.recoupTimer = 0;
         this.averageAttractiveness = randInt(1, 100) / 100;
@@ -72,19 +72,20 @@ export class Patch extends Location {
         if(this.name == 2) {
             // console.log(`n: ${this.nectarLevel} r: ${this.recoupTimer}`);
         }
-        if (this.nectarLevel == 0 && this.recoupTimer < 3) {
-            this.recoupTimer += delta / (MIN_PER_DAY * 60);
+        if (this.nectarLevel == 0 && this.recoupTimer < RECOUP_TIME) {
+            this.recoupTimer += delta;
         } else {
             this.recoupTimer = 0;
             this.nectarLevel = Math.min(
                 this.nectarBaseLevel,
-                this.nectarLevel + delta / (MIN_PER_DAY * 60)
+                this.nectarLevel + delta
             );
         }
     }
 
     collectNectar(delta) {
-        const nectar = Math.min(this.nectarLevel, delta / BEE_COLLECTION_TIME);
+        console.log(delta * BEE_COLLECTION_RATE);
+        const nectar = Math.min(this.nectarLevel, delta * BEE_COLLECTION_RATE);
         this.nectarLevel = Math.max(
             0,
             this.nectarLevel - nectar

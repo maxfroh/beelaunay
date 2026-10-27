@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Beelaunay Triangulation</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&family=Noto+Sans+SC:wght@100..900&display=swap"
+        rel="stylesheet">
+    <script src="https://kit.fontawesome.com/2b62b7b9ba.js" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+</head>
+
+<body>
+    <main>
+        <nav>
+            <ul>
+                <li><a href="/#">Simulation</a></li>
+                <li><a href="writeup.html">Information</a></li>
+            </ul>
+        </nav>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <article class="blog-post">
+                        <div class="container">
+                            <div class="row">
+                                <h1 class="display-4 mb-3">
+                                    Modeling Bee Pollination with Voronoi Diagrams
+                                </h1>
+                                <h2 class="subtitle display-4 mb-3">Max Frohman | CSCI-716</h2>
+                            </div>
+                            <hr>
+                            <div class="lh-lg fs-5 article-body">
+                                <h2>Background</h2>
+                                <p>Honey bees, some of the most well-known pollinators, have dynamic foraging behaviors.
+                                    Many factors influence how a honey bee decides where to forage, but one significant
+                                    factor is the relative quality of a target flower patch. A bee's assessment of patch
+                                    quality is also multivariable, taking into consideration nectar and pollen
+                                    availability, the time of day, the distance of the patch, and the needs of her
+                                    colony. To visualize how a bee might navigate the world, flower patches in an
+                                    environment can be modeled with a weighted Voronoi diagram. As seasons change and
+                                    flower patches are visited, the Voronoi diagram will change as well, impacting where
+                                    bees may decide to go.</p>
+                                <p>While only modeling a subset of the factors bees use to make foraging decisions, a
+                                    weighted Voronoi diagram can still simulate a sizable portion of them. This kind of
+                                    model can play a useful role in understanding the local ecology of an area by
+                                    visualizing how pollinators might move through their space. Along similar lines,
+                                    flower patch attractiveness can be useful information for beekeepers, who must
+                                    consider flower availability when placing new bee hives. Which kinds of flowers are
+                                    foraged by a bee hive can determine the characteristics of honey the hive produces
+                                    and can give hints as to when a hive may have abundances or dearths of food.</p>
+                                <p></p>
+                                <h2>References</h2>
+                                <ol class="references">
+                                    <li>Abou-Shaara, H. F. The foraging behaviour of honey bees, Apis mellifera: a
+                                        review. <i>Vet. Med.</i> <b>59</b>, 1&ndash;10 (2014).
+                                    <li>Ahasan, R. <i>Model spatial influence with weighted Voronoi.</i> <a
+                                            target="_blank"
+                                            href="https://www.esri.com/arcgis-blog/products/spatial-analyst/analytics/model-spatial-influence-with-weighted-voronoi">https://www.esri.com/arcgis-blog/products/spatial-analyst/analytics/model-spatial-influence-with-weighted-voronoi</a>
+                                        (2026).</li>
+                                    <li>Kaehler, T. G., Halinski, R., Contrera, F. A. L., Silveira, A. & Blochtein, B.
+                                        Flight distance and foraging of Tetragonisca fiebrigi (Apidae: Meliponini) in
+                                        response to different concentrations of sugar in food resources and abiotic
+                                        factors. <i>Journal of Apicultural Research</i> <b>63</b>, 387&ndash;399 (2024).
+                                    </li>
+                                    <li>Seeley, T. D. Social foraging by honeybees: how colonies allocate foragers among
+                                        patches of flowers. <i>Behav. Ecol. Sociobiol.</i> <b>19</b>, 343&ndash;354
+                                        (1986).
+                                    </li>
+                                    <li>Fortuna, M. A., Garc&iacute;a, C., Guimar&atilde;es Jr., P. R. & Bascompte, J.
+                                        Spatial mating networks in insect-pollinated plants. <i>Ecology Letters</i>
+                                        <b>11</b>,
+                                        490&ndash;498 (2008).</li>
+                                    <li>Yong, K. E. A mathematical model of the interactions between pollinators and
+                                        their effects on pollination of almonds. (University of Iowa, Iowa City, IA,
+                                        United States, 2012). <a target="_blank"
+                                            href="doi:10.17077/etd.fil8ujnn">doi:10.17077/etd.fil8ujnn</a>.</li>
+                                    <li>Guillermo-Ferreira, R., Filippov, A. E., Kovalev, A. & Gorb, S. N. Voronoi
+                                        diagrams and Delaunay triangulation for modelling animal territorial behaviour.
+                                        <i>Ecology and Evolution</i> <b>14</b>, e11715 (2024).
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>

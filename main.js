@@ -6,14 +6,14 @@ import { weightedVoronoi } from 'd3-weighted-voronoi';
 
 import { Hive, Patch } from './location.js';
 import { Bee } from './bee.js';
-import { NUM_BEES, NUM_PATCHES, MIN_PER_DAY } from './parameters.js';
+import { MAX_NUM_BEES, NUM_PATCHES, MIN_PER_DAY, WORLD_SIZE } from './parameters.js';
 
 
 const scene = new THREE.Scene();
 
 // orthographic camera setup
 const aspect = 1;
-const frustumSize = 200;
+const frustumSize = WORLD_SIZE;
 const left = -frustumSize * aspect / 2;
 const right = frustumSize * aspect / 2;
 const top = frustumSize / 2;
@@ -91,7 +91,7 @@ for (let i = 0; i < NUM_PATCHES; i++) {
 }
 
 const bees = []
-for (let i = 0; i < NUM_BEES; i++) {
+for (let i = 0; i < MAX_NUM_BEES; i++) {
     const bee = new Bee(scene, renderer, frustumSize, hive, patches);
     bees.push(bee);
 }
@@ -165,12 +165,12 @@ function animate(time) {
         return;
     }
 
-    const deltaSeconds = delta / 1000;
+    const deltaDay = delta / 1000 * 1 / (MIN_PER_DAY * 60); // convert real ms unit to simulation day unit
 
-    bees.forEach((bee) => { bee.update(deltaSeconds) });
-    patches.forEach((patch) => { patch.update(deltaSeconds) });
+    bees.forEach((bee) => { bee.update(deltaDay) });
+    patches.forEach((patch) => { patch.update(deltaDay) });
 
-    currTime += deltaSeconds / (MIN_PER_DAY * 60);
+    currTime += deltaDay;
     if (currTime >= 1) {
         currTime = 0;
         currDay += 1;

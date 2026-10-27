@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 import { randInt } from 'three/src/math/MathUtils.js';
 import { Patch } from './location';
-import { BEE_COLLECTION_TIME, BEE_NECTAR_CAPACITY, BEE_SPEED } from './parameters';
+import { BEE_COLLECTION_TIME, BEE_NECTAR_CAPACITY, EMPTY_BEE_SPEED, MIN_PER_DAY, MILES_TO_UNIT } from './parameters';
 
 
 export class Bee {
@@ -93,7 +93,7 @@ export class Bee {
             const nectar = this.target.collectNectar ? this.target.collectNectar(delta) : 1;
             this.nectarCollected += (isNaN(nectar) ? 0 : nectar);
 
-            if (this.nectarTimer > 2 || this.nectarCollected >= BEE_NECTAR_CAPACITY || nectar == 0) {
+            if (this.nectarTimer > BEE_COLLECTION_TIME || this.nectarCollected >= BEE_NECTAR_CAPACITY || nectar == 0) {
                 this.target.beesPresent = Math.max(0, this.target.beesPresent - 1);
                 this.nectarTimer = 0;
                 this.gatheringNectar = false;
@@ -125,7 +125,7 @@ export class Bee {
 
         this.mesh.lookAt(this.target.position);
         const distance = this.mesh.position.distanceTo(this.target.position);
-        const step = BEE_SPEED * delta;
+        const step = EMPTY_BEE_SPEED * delta * 24 * MILES_TO_UNIT; // X mi/hr * 1/day * 24hr/day * y units/mi ==> speed in units/day
 
         if (distance < step) {
             this.mesh.position.copy(this.target.position);
@@ -160,7 +160,7 @@ export class Bee {
                 newTarget = this.patches[Math.floor(Math.random() * this.patches.length)];
                 tries -= 1;
                 if (tries <= 0) {
-                    console.log("Couldn't find anyone... going home!");
+                    // console.log("Couldn't find anyone... going home!");
                     this.goingHome = true;
                     this.gatheringNectar = false;
                     return this.hive;

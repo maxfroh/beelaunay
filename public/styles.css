@@ -89,6 +89,15 @@ h2.subtitle {
   text-indent: 2em;
 }
 
+.article-body ol {
+  font-size: medium;
+}
+
+.article-body ol li {
+  padding-left: 2em;
+  text-indent: -2em;
+}
+
 .btn-outline-primary,
 .btn-primary {
   border-color: #1E3741 !important;
@@ -130,6 +139,10 @@ h2.subtitle {
   z-index: 1;
   position: relative;
   aspect-ratio: 1 / 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
 }
 
 #canvas-container canvas {
@@ -149,4 +162,27 @@ h2.subtitle {
     1px 1px 0px #000,
     2px 2px 0px #000;
   pointer-events: none;
+}
+
+nav {
+  padding-bottom: 24px;
+}
+
+nav ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  background-color: #3C575B;
+  display: flex;
+}
+
+nav ul li a {
+  display: block;
+  color: white;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+nav ul li a:hover {
+  background-color: #1E3741;
 }
