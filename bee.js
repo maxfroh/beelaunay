@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 import { randInt } from 'three/src/math/MathUtils.js';
 import { Patch } from './location';
 import { BEE_COLLECTION_TIME, BEE_NECTAR_CAPACITY, EMPTY_BEE_SPEED, MIN_PER_DAY, MILES_TO_UNIT } from './parameters';
+import { weightedVoronoi } from 'd3-weighted-voronoi';
 
 
 export class Bee {
@@ -73,6 +74,8 @@ export class Bee {
         this.centerMargin = frustumSize / 2;
         this.target = this.getNewTarget();
 
+
+
     }
 
     initMesh() {
@@ -99,6 +102,7 @@ export class Bee {
                 this.gatheringNectar = false;
 
                 if (this.nectarCollected >= BEE_NECTAR_CAPACITY) {
+                    console.log("I'm full!");
                     this.goingHome = true;
                     this.target = this.hive;
                 } else {

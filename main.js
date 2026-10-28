@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import PoissonDiskSampling from 'poisson-disk-sampling';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { Line2, LineGeometry } from 'three/examples/jsm/Addons.js';
 
@@ -83,12 +84,24 @@ scene.add(ground);
 
 const hive = new Hive(scene, renderer, frustumSize);
 
+// Poisson disk sampling for more evenly spaced flower patches
+var p = new PoissonDiskSampling({
+    shape: [frustumSize, frustumSize],
+    minDistance: frustumSize * (1 / 20),
+    maxDistance: frustumSize * (1),
+    tries: 30
+});
+p.addPoint([frustumSize / 2, frustumSize / 2])
+
 const patches = []
-for (let i = 0; i < NUM_PATCHES; i++) {
-    const patch = new Patch(frustumSize);
+var point;
+while((point = p.next()) && patches.length < NUM_PATCHES) {
+    let [x, z] = point;
+    const patch = new Patch(frustumSize, x - frustumSize / 2, z - frustumSize / 2);
     scene.add(patch.mesh);
     patches.push(patch);
 }
+console.log(NUM_PATCHES, patches.length);
 
 const bees = []
 for (let i = 0; i < MAX_NUM_BEES; i++) {
@@ -150,11 +163,11 @@ function processVoronoi(hive, currTime) {
         // console.log(new THREE.Vector2(old_cell[0], old_cell[1]).distanceTo(new THREE.Vector2(cells[4][2][0], cells[4][2][1])));
         old_cell = Array.from(cells[4][2]);
     }
-    drawVoronoi(cells);
     return cells;
 }
 
-processVoronoi(hive, currTime * 24);
+var cells = processVoronoi(hive, currTime * 24);
+drawVoronoi(cells);
 
 function animate(time) {
     const delta = time - lastTime;
@@ -191,7 +204,8 @@ function animate(time) {
         frame = 0;
     }
 
-    processVoronoi(hive, currTime * 24);
+    cells = processVoronoi(hive, currTime * 24);
+    drawVoronoi(cells);
 
     renderer.render(scene, camera);
 }

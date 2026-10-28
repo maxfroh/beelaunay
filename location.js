@@ -34,7 +34,7 @@ export class Patch extends Location {
     static BLACK = new THREE.Color().setHSL(0, 0, 0);
     static label = 0;
 
-    constructor(frustumSize) {
+    constructor(frustumSize, provided_x, provided_z) {
         super();
         this.name = Patch.label;
         Patch.label += 1;
@@ -42,9 +42,22 @@ export class Patch extends Location {
         this.lowerBound = Math.min(frustumSize * .1, 10);
         this.upperBound = Math.max(frustumSize * .9, frustumSize - 10);
         const centerMargin = frustumSize / 2;
-        const x = centerMargin - randInt(this.lowerBound, this.upperBound);
+
+        var x;
+        if (provided_x === null) {
+            x = centerMargin - randInt(this.lowerBound, this.upperBound);
+        } else {
+            x = provided_x;
+        }
+
         const y = 3;
-        const z = centerMargin - randInt(this.lowerBound, this.upperBound);
+
+        var z;
+        if (provided_z === null) {
+            z = centerMargin - randInt(this.lowerBound, this.upperBound);
+        } else {
+            z = provided_z;
+        }
         this.radius = randInt(1, 3);
         const segments = 6;
 
@@ -84,7 +97,7 @@ export class Patch extends Location {
     }
 
     collectNectar(delta) {
-        console.log(delta * BEE_COLLECTION_RATE);
+        // console.log(delta * BEE_COLLECTION_RATE);
         const nectar = Math.min(this.nectarLevel, delta * BEE_COLLECTION_RATE);
         this.nectarLevel = Math.max(
             0,
