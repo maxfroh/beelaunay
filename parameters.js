@@ -1,7 +1,7 @@
 // environment
-export const MIN_PER_DAY = 2;
-export const MAX_NUM_BEES = 100;
-export const NUM_PATCHES = 100;
+export const MIN_PER_DAY = 1;
+export const MAX_NUM_BEES = 10;
+export const NUM_PATCHES = 40;
 export const WORLD_SIZE = 400;
 export const MILES_TO_UNIT = 10; // each mile is 100 units 
 export const MIN_IN_A_DAY = 24 * 60;

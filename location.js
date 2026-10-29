@@ -62,7 +62,6 @@ export class Patch extends Location {
         const segments = 6;
 
         this.position = new THREE.Vector3(x, y, z);
-        console.log(`Patch ${this.name} is ${this.position.distanceTo(new THREE.Vector3(0, 0, 0))} from the hive`);
         this.geometry = new THREE.CircleGeometry(this.radius, segments);
         this.color = new THREE.Color(
             `hsl(${randInt(270, 320)}, ${randInt(50, 80)}%, ${randInt(50, 80)}%)`
@@ -82,7 +81,7 @@ export class Patch extends Location {
     update(delta) {
         const currentColor = new THREE.Color().lerpColors(Patch.BLACK, this.color, this.nectarLevel / this.nectarBaseLevel);
         this.material.color.set(currentColor);
-        if(this.name == 2) {
+        if (this.name == 2) {
             // console.log(`n: ${this.nectarLevel} r: ${this.recoupTimer}`);
         }
         if (this.nectarLevel == 0 && this.recoupTimer < RECOUP_TIME) {
@@ -103,7 +102,7 @@ export class Patch extends Location {
             0,
             this.nectarLevel - nectar
         );
-        if(this.name == 2) {
+        if (this.name == 2) {
             // console.log(`returning ${nectar} | n: ${this.nectarLevel}`);
         }
         return nectar;
@@ -130,23 +129,9 @@ export class Patch extends Location {
      * @returns {number} The weight of the patch. 
     */
     #f(p_h, p_t, size, n, b, t, a) {
-        // console.log(`Patch ${this.name}: ${10 * (60 * this.#q(p_h, p_t, t) + 30 * Math.exp(-2 * b / size) + 10 * a)}`);
-
+        const distanceFactor = this.#q(p_h, p_t, t);
         return (
-            // (
-            //     Math.log(
-            //         0.154 * Patch.#z(t) / (1 + p_h.distanceTo(p_t))
-            //     )
-            // ) +
-            // (
-            //     -1 * (1 - Patch.#z(t)) +
-            //     Patch.#z(t) * 1 / (p_h.distanceTo(p_t) + 1)
-            // ) *
-            10 *
-            (40 * this.#q(p_h, p_t, t) *
-                10 * Math.exp(-2 * b / size) +
-                10 * a)
-            // (2 / (1 + Math.exp(b / size)))
+            distanceFactor
         );
     }
 
@@ -156,46 +141,18 @@ export class Patch extends Location {
      * @param {number} t
      */
     #q(p_h, p_t, t) {
-        const squeezeFactor = 3.5;
-        const squeezed_p_h = p_h.clone().multiplyScalar(squeezeFactor);
-        const squeezed_p_t = p_t.clone().multiplyScalar(squeezeFactor);
-        const m = squeezeFactor * Math.abs(this.upperBound - this.lowerBound) / 2; // maximum distance possible from hive along x/z-axis
-        const d_max = Math.sqrt(2 * Math.pow(m, 2)); // maximum distance (sqrt[m^2 + m^2])
-        const d = squeezed_p_h.distanceTo(squeezed_p_t) / d_max; // normalize distance
-        const distanceDaylightFactor = d / Math.pow(0.3 * Patch.#z(t), -1 * d);
-        const maxDDF = 10 / 3;
-        const normalizedDDF = distanceDaylightFactor / maxDDF;
-        return Math.max(0, normalizedDDF);
-    }
-
-    /**
-     * Modified lognormal distribution.
-     * Scaled for t in [0, 24).
-     * 
-     * Will return higher values the closer it gets to the ideal time of day for honey bees to forage (~7am-1:30pm).
-     */
-    static #z(t) {
-        const _t = Math.min(24.01, Math.max(t, 1.01));
-        const std = 0.31;
-        const mu = 12;
-        const scaleFactor = 7;
-        const z_max = scaleFactor * Math.exp(Math.pow(std, 2) / 2) / (mu * std * Math.sqrt(2 * Math.PI));
-        const val = Math.min(
-            1,
-            (
-                scaleFactor * (
-                    1 / (1.08 * std * (_t - 1) * Math.sqrt(2 * Math.PI))
-                ) *
-                Math.exp(
-                    (
-                        -1 * Math.pow(
-                            (Math.log(1.08 * (_t - 1)) - Math.log(mu)), 2
-                        )
-                    ) /
-                    (2 * Math.pow(std, 2))
-                )
-            )
-        );
-        return (isNaN(val) || val <= 0) ? 0 : (val / z_max);
+        // const squeezeFactor = 1;
+        // const squeezed_p_h = p_h.clone().multiplyScalar(squeezeFactor);
+        // const squeezed_p_t = p_t.clone().multiplyScalar(squeezeFactor);
+        // const m = squeezeFactor * Math.abs(this.upperBound - this.lowerBound) / 2; // maximum distance possible from hive along x/z-axis
+        // const d_max = Math.sqrt(2 * Math.pow(m, 2)); // maximum distance (sqrt[m^2 + m^2])
+        // const d = squeezed_p_h.distanceTo(squeezed_p_t) / d_max; // normalize distance
+        const daylightFactor = -10 * Math.pow(2 * t - 1.15, 4) + 1;
+        const v = 1 - Math.max(0, daylightFactor);
+        // const distanceDaylightFactor = d / Math.pow(0.3 * Patch.#z(t), -1 * d);
+        // const maxDDF = 10 / 3;
+        // const normalizedDDF = distanceDaylightFactor / maxDDF;
+        return 2000 * v / (p_h.distanceTo(p_t) / 200 + 1);
+        // return 1;
     }
 }

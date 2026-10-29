@@ -1,14 +1,10 @@
 import * as THREE from 'three';
 import PoissonDiskSampling from 'poisson-disk-sampling';
-import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
-import { Line2, LineGeometry } from 'three/examples/jsm/Addons.js';
-
-import { weightedVoronoi } from 'd3-weighted-voronoi';
 
 import { Hive, Patch } from './location.js';
 import { Bee } from './bee.js';
 import { MAX_NUM_BEES, NUM_PATCHES, MIN_PER_DAY, WORLD_SIZE } from './parameters.js';
-
+import { drawVoronoi, processVoronoi } from './voronoi.js'
 
 const scene = new THREE.Scene();
 
@@ -47,7 +43,7 @@ function getWindowSize() {
     }
     return Math.floor(size);
 }
-console.log(window.innerWidth, window.innerHeight, container.clientWidth, container.clientHeight);
+// console.log(window.innerWidth, window.innerHeight, container.clientWidth, container.clientHeight);
 
 const renderer = new THREE.WebGLRenderer();
 const windowSize = getWindowSize();
@@ -86,88 +82,37 @@ const hive = new Hive(scene, renderer, frustumSize);
 
 // Poisson disk sampling for more evenly spaced flower patches
 var p = new PoissonDiskSampling({
-    shape: [frustumSize, frustumSize],
+    shape: [frustumSize - 20, frustumSize - 20],
     minDistance: frustumSize * (1 / 20),
-    maxDistance: frustumSize * (1),
+    maxDistance: frustumSize,
     tries: 30
 });
 p.addPoint([frustumSize / 2, frustumSize / 2])
 
 const patches = []
 var point;
-while((point = p.next()) && patches.length < NUM_PATCHES) {
+while ((point = p.next()) && patches.length < NUM_PATCHES) {
     let [x, z] = point;
-    const patch = new Patch(frustumSize, x - frustumSize / 2, z - frustumSize / 2);
+    const patch = new Patch(frustumSize, x - frustumSize / 2 + 10, z - frustumSize / 2 + 10);
     scene.add(patch.mesh);
     patches.push(patch);
 }
-console.log(NUM_PATCHES, patches.length);
 
 const bees = []
 for (let i = 0; i < MAX_NUM_BEES; i++) {
     const bee = new Bee(scene, renderer, frustumSize, hive, patches);
     bees.push(bee);
 }
+bees[0].active_bee = true;
 
 let lastTime = 0;
 let currTime = 0.5;
 let currDay = 0;
 let frame = 0;
 
-const trackedOutlines = [];
-/**
- * @param {Array<Array<Array<number>} cells
- */
-function drawVoronoi(cells) {
-    trackedOutlines.forEach((outline) => {
-        scene.remove(outline);
-        outline.geometry.dispose();
-        outline.material.dispose();
-    });
-    trackedOutlines.length = 0;
 
-    const total = cells.length;
-    cells.forEach((cell, i) => {
-        const points = cell.map((point) => new THREE.Vector3(point[0], 2, point[1]));
-        // close the loop
-        points.push(points[0]);
-        const geometry = new LineGeometry().setFromPoints(points);
-        const material = new LineMaterial({
-            color: 0xffeeee,
-            // color: new THREE.Color(`hsl(${180 + 360 * Math.cos(i) * Math.sin(i)}, ${80 + 15 * Math.cos(i)}%, ${60 + 10 * Math.sin(i)}%)`),
-            linewidth: 4,
-        });
-        const outline = new Line2(geometry, material);
-        trackedOutlines.push(outline);
-        scene.add(outline);
-    })
-}
-
-let old_cell = [];
-
-/**
- * @param {Hive} hive
- * @param {number} currTime 
- */
-function processVoronoi(hive, currTime) {
-    // console.log(patches[0].getWeight(hive, currTime) / patches[4].getWeight(hive, currTime), patches[10].getWeight(hive, currTime) / patches[8].getWeight(hive, currTime));
-    const calcVoronoi = weightedVoronoi()
-        .x(function (patch) { return patch.position.x; }) // x = patch x-coord
-        .y(function (patch) { return patch.position.z; }) // y is actually patch z-coord!
-        .weight(function (patch) { return patch.getWeight(hive, currTime); }) // use patch's weight function
-        .clip([[-frustumSize / 2, -frustumSize / 2], [-frustumSize / 2, frustumSize / 2], [frustumSize / 2, frustumSize / 2], [frustumSize / 2, -frustumSize / 2]]);  // set the clipping polygon
-    const cells = calcVoronoi(patches);
-    if (old_cell.length == 0) {
-        old_cell = Array.from(cells[4][2]);
-    } else {
-        // console.log(new THREE.Vector2(old_cell[0], old_cell[1]).distanceTo(new THREE.Vector2(cells[4][2][0], cells[4][2][1])));
-        old_cell = Array.from(cells[4][2]);
-    }
-    return cells;
-}
-
-var cells = processVoronoi(hive, currTime * 24);
-drawVoronoi(cells);
+// var cells = processVoronoi(hive, patches, currTime, oldCell);
+// drawVoronoi(cells, scene);
 
 function animate(time) {
     const delta = time - lastTime;
@@ -179,15 +124,15 @@ function animate(time) {
     }
 
     const deltaDay = delta / 1000 * 1 / (MIN_PER_DAY * 60); // convert real ms unit to simulation day unit
-
-    bees.forEach((bee) => { bee.update(deltaDay) });
-    patches.forEach((patch) => { patch.update(deltaDay) });
-
     currTime += deltaDay;
     if (currTime >= 1) {
         currTime = 0;
         currDay += 1;
     }
+
+    bees.forEach((bee) => { bee.update(deltaDay, currTime) });
+    patches.forEach((patch) => { patch.update(deltaDay) });
+
 
     const hour = Math.floor(currTime * 24);
     const minute = Math.floor(60 * (24 * currTime - hour));
@@ -204,8 +149,8 @@ function animate(time) {
         frame = 0;
     }
 
-    cells = processVoronoi(hive, currTime * 24);
-    drawVoronoi(cells);
+    // cells = processVoronoi(hive, patches, currTime, oldCell);
+    // drawVoronoi(cells, scene);
 
     renderer.render(scene, camera);
 }

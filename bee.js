@@ -4,6 +4,7 @@ import { randInt } from 'three/src/math/MathUtils.js';
 import { Patch } from './location';
 import { BEE_COLLECTION_TIME, BEE_NECTAR_CAPACITY, EMPTY_BEE_SPEED, MIN_PER_DAY, MILES_TO_UNIT } from './parameters';
 import { weightedVoronoi } from 'd3-weighted-voronoi';
+import { processVoronoi, drawVoronoi } from './voronoi';
 
 
 export class Bee {
@@ -74,21 +75,41 @@ export class Bee {
         this.centerMargin = frustumSize / 2;
         this.target = this.getNewTarget();
 
-
-
+        this.voronoi_cells = null;
+        this.active_bee = false;
     }
 
     initMesh() {
         this.mesh = Bee.beeTemplate.clone(true);
         this.mesh.position.copy(this.hive.position);
+        // this.originalColor = this.mesh.material.color.clone();
         this.hive.bees_present += 1;
         this.scene.add(this.mesh);
     }
 
+    setActive() {
+        this.active_bee = false;
+        this.mesh.material.color.set("rgb(255, 0, 0)");
+    }
+
+    setInactive() {
+        this.active_bee = false;
+        this.mesh.material.color.set(this.originalColor);
+    }
+
+
     /**
      * @param {number} delta 
      */
-    update(delta) {
+    update(delta, currTime) {
+        if (this.voronoi_cells === null) {
+            // this.currPatches = this.patches.filter(patch => patch.position != this.target.position);
+            this.voronoi_cells = processVoronoi(this.target, this.patches, currTime);
+            // if (this.active_bee) {
+            //     drawVoronoi(this.voronoi_cells, this.scene);
+            // }
+        }
+
         // console.log("Current state:", { gathering: this.gatheringNectar, timer: this.nectarTimer, collected: this.nectarCollected, target: this.target });
         if (this.gatheringNectar) {
             this.nectarTimer += delta;
@@ -107,11 +128,21 @@ export class Bee {
                     this.target = this.hive;
                 } else {
                     this.target = this.getNewTarget();
+                    // this.currPatches = this.patches.filter(patch => patch.position != this.target.position);
+                    this.voronoi_cells = processVoronoi(this.target, this.patches, currTime);
+                    // if (this.active_bee) {
+                    //     drawVoronoi(this.voronoi_cells, this.scene);
+                    // }
                     if (this.target === this.hive) {
                         this.goingHome = true;
                     }
                 }
             }
+        }
+
+        if (this.active_bee) {
+            this.voronoi_cells = processVoronoi(this.target, this.patches, currTime);
+            drawVoronoi(this.voronoi_cells, this.scene);
         }
 
         this.move(delta);
