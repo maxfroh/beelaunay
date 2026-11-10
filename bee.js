@@ -89,12 +89,12 @@ export class Bee {
 
     setActive() {
         this.active_bee = false;
-        this.mesh.material.color.set("rgb(255, 0, 0)");
+        // this.mesh.material.color.set("rgb(255, 0, 0)");
     }
 
     setInactive() {
         this.active_bee = false;
-        this.mesh.material.color.set(this.originalColor);
+        // this.mesh.material.color.set(this.originalColor);
     }
 
 
@@ -142,7 +142,7 @@ export class Bee {
 
         if (this.active_bee) {
             this.voronoi_cells = processVoronoi(this.target, this.patches, currTime);
-            drawVoronoi(this.voronoi_cells, this.scene);
+            drawVoronoi(this.voronoi_cells, this.scene, this.target);
         }
 
         this.move(delta);

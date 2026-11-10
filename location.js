@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { randInt } from 'three/src/math/MathUtils.js';
-import { BEE_COLLECTION_TIME, MIN_PER_DAY, RECOUP_TIME, BEE_COLLECTION_RATE } from './parameters';
+import { BEE_COLLECTION_TIME, MIN_PER_DAY, RECOUP_TIME, BEE_COLLECTION_RATE, WORLD_SIZE } from './parameters';
 
 
 export class Location {
@@ -15,7 +15,7 @@ export class Hive extends Location {
         super();
         this.scene = scene;
         const x = 0;
-        const y = 3;
+        const y = 4;
         const z = 0;
         this.radius = 4;
         this.segments = 6;
@@ -50,7 +50,7 @@ export class Patch extends Location {
             x = provided_x;
         }
 
-        const y = 3;
+        const y = 4;
 
         var z;
         if (provided_z === null) {
@@ -129,9 +129,10 @@ export class Patch extends Location {
      * @returns {number} The weight of the patch. 
     */
     #f(p_h, p_t, size, n, b, t, a) {
-        const distanceFactor = this.#q(p_h, p_t, t);
+        const maxDistance = Math.sqrt(2 * Math.pow(WORLD_SIZE - 20, 2))
+        const daylightFactor = this.#q(p_h, p_t, t);
         return (
-            distanceFactor
+            1 + (n * n / size) * daylightFactor / (b + 1) * (maxDistance * 0.15)
         );
     }
 
@@ -152,7 +153,7 @@ export class Patch extends Location {
         // const distanceDaylightFactor = d / Math.pow(0.3 * Patch.#z(t), -1 * d);
         // const maxDDF = 10 / 3;
         // const normalizedDDF = distanceDaylightFactor / maxDDF;
-        return 2000 * v / (p_h.distanceTo(p_t) / 200 + 1);
+        return v / (p_h.distanceTo(p_t) / 200 + 1);
         // return 1;
     }
 }
