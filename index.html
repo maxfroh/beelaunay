@@ -41,10 +41,20 @@
               <hr>
               <div class="row justify-content-center">
                 <div class="col-3" id="parameter-input">
-                  <div>
-                    <label for="num-patches-range">Number of Flower Patches:</label>
-                    <input type="range" id="num-patches-range" min="2" max="120" step="1" , value="80">
-                    <input type="number" id="num-patches-number" min="2" max="120" value="80">
+                  <div class="row">
+                    <div class="col">
+                      <div class="row mb-1">
+                        <label for="num-patches-range">Number of Flower Patches:</label>
+                      </div>
+                      <div class="row">
+                        <div class="col-9">
+                          <input class="w-100 h-100" type="range" id="num-patches-range" min="2" max="120" step="1" , value="80">
+                        </div>
+                        <div class="col-3">
+                          <input type="number" id="num-patches-number" min="2" max="120" value="80">
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <script>
                     $(function () {
@@ -58,25 +68,35 @@
                         val = Math.min(Math.max(2, val), 120);
                         $rangeInput.val(val);
                       });
-                      $numberInput.on("blur", function() {
+                      $numberInput.on("blur", function () {
                         if ($numberInput.val() === '' || Number($numberInput.val() < 2)) {
                           $numberInput.val(2);
                         } else if (Number($numberInput.val()) > 120) {
                           $numberInput.val(120);
-                        } 
+                        }
                         $rangeInput.val($numberInput.val());
                       })
                     });
                   </script>
-                  <div>
-                    <label for="num-bees-range">Number of Bees:</label>
-                    <input type="range" id="num-bees-range" min="2" max="40" step="1" , value="10">
-                    <input type="number" id="num-bees-number" min="2" max="40" value="10">
+                  <div class="row">
+                    <div class="col">
+                      <div class="row mb-1 mt-2">
+                        <label for="num-bees-range">Number of Bees:</label>
+                      </div>
+                      <div class="row">
+                        <div class="col-9">
+                          <input class="w-100 h-100" type="range" id="num-bees-range" min="2" max="40" step="1" , value="10">
+                        </div>
+                        <div class="col-3">
+                          <input type="number" id="num-bees-number" min="2" max="40" value="10">
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <script>
+                  <!-- <script>
                     const rangeInput = document.getElementById("num-bees-range");
                     const numberInput = document.getElementById("num-bees=number");
-                  </script>
+                  </script> -->
                   <script>
                     $(function () {
                       const $rangeInput = $("#num-bees-range");
@@ -89,12 +109,12 @@
                         val = Math.min(Math.max(2, val), 40);
                         $rangeInput.val(val);
                       });
-                      $numberInput.on("blur", function() {
+                      $numberInput.on("blur", function () {
                         if ($numberInput.val() === '' || Number($numberInput.val() < 2)) {
                           $numberInput.val(2);
                         } else if (Number($numberInput.val()) > 40) {
                           $numberInput.val(40);
-                        } 
+                        }
                         $rangeInput.val($numberInput.val());
                       })
                     });

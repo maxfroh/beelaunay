@@ -78,6 +78,7 @@ export class Bee {
 
         this.voronoi = null;
         this.active_bee = false;
+        this.position = new THREE.Vector3().copy(this.hive.position);
     }
 
     initMesh() {
@@ -144,7 +145,7 @@ export class Bee {
         }
 
         if (this.active_bee) {
-            this.voronoi = getVoronoiCells(this.target, this.patches, currTime);
+            this.voronoi = getVoronoiCells(this.position, this.target, this.patches, currTime);
             drawVoronoi(this.voronoi.cells, this.voronoi.adjacencyMap, this.scene, this.target);
         }
 
@@ -179,6 +180,7 @@ export class Bee {
         } else {
             const direction = new THREE.Vector3().subVectors(this.target.position, this.mesh.position).normalize();
             this.mesh.position.addScaledVector(direction, step);
+            this.position.addScaledVector(direction, step);
         }
 
     }
@@ -192,7 +194,7 @@ export class Bee {
         }
 
         if (this.target != null) {
-            this.voronoi = getVoronoiCells(this.target, this.patches, currTime);
+            this.voronoi = getVoronoiCells(this.position, this.target, this.patches, currTime);
         }
 
         const getPatch = () => {

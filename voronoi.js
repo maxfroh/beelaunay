@@ -113,11 +113,11 @@ export function drawVoronoi(cells, adjacencyMap, scene, target) {
 /**
  * @param {Array<Patch>} patches
  */
-export function getVoronoiCells(center, patches, currTime) {
+export function getVoronoiCells(beePosition, hive, patches, currTime) {
     let maxPatchName = 0;
     const sites = patches.map((patch, index) => {
         const [x, y, z] = patch.position;
-        const weight = patch.getWeight(center, currTime, patches.length);
+        const weight = patch.getWeight(beePosition, hive, currTime, patches.length);
         const W = (x * x) + (z * z) - weight;
         const v = new THREE.Vector3(x, z, W);
         v.siteIndex = index;

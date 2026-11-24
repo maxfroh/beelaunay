@@ -3,6 +3,7 @@ export const MIN_PER_DAY = 0.5;
 export const MAX_NUM_BEES = 40;//200;
 export const NUM_PATCHES = 80;
 export const WORLD_SIZE = 400;
+export const MIN_PATCH_DISTANCE = WORLD_SIZE / 20;
 export const MILES_TO_UNIT = 10; // each mile is 100 units 
 export const MIN_IN_A_DAY = 24 * 60;
 export const Y = 4;
@@ -20,7 +21,7 @@ export const SLEEP_TIME = 20 / 24;
 export const HONEY_PER_LARVA = 1;
 
 // flower factors
-export const RECOUP_TIME = 0.25; // 6 hours to recover nectar
+export const RECOUP_TIME = 0.25; // 6 hours to recover 1 nectar
 export const MAX_SIZE = 5;
 export const MIN_SIZE = 1;
 

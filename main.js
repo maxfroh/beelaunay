@@ -3,7 +3,7 @@ import PoissonDiskSampling from 'poisson-disk-sampling';
 
 import { Hive, Patch } from './location.js';
 import { Bee } from './bee.js';
-import { MAX_NUM_BEES, NUM_PATCHES, MIN_PER_DAY, WORLD_SIZE } from './parameters.js';
+import { MAX_NUM_BEES, NUM_PATCHES, MIN_PER_DAY, WORLD_SIZE, MIN_PATCH_DISTANCE } from './parameters.js';
 
 
 // persistent DOM queries
@@ -126,10 +126,17 @@ function startSimulation() {
     const hive = new Hive(scene, renderer, frustumSize);
 
     // Poisson disk sampling for more evenly spaced flower patches
+    const totalArea = (frustumSize - 20) ** 2;
+    // density is point/area
+    const patchDensity = numPatches / totalArea;
+    // minimum distance of a randomly distributed uniform sample of patches is expected to be 1 / (2 * sqrt(density))
+    // https://doc.esri.com/en/arcgis-pro/latest/tool-reference/spatial-statistics/h-how-average-nearest-neighbor-distance-spatial-st.html
+    // I tweaked it O_o
+    const minDistance = 0.75 / Math.sqrt(patchDensity);
     var p = new PoissonDiskSampling({
         shape: [frustumSize - 20, frustumSize - 20],
-        minDistance: frustumSize * (1 / 20),
-        maxDistance: frustumSize,
+        minDistance: minDistance,
+        maxDistance: 4 * minDistance,
         tries: 30
     });
     p.addPoint([frustumSize / 2, frustumSize / 2])
@@ -141,6 +148,7 @@ function startSimulation() {
         scene.add(patch.object);
         patches.push(patch);
     }
+    Patch.updateMinDistance(patches);
 
     for (let i = 0; i < numBees; i++) {
         const bee = new Bee(scene, renderer, frustumSize, hive, patches, currTime);

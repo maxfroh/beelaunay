@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { randInt } from 'three/src/math/MathUtils.js';
-import { BEE_COLLECTION_TIME, MIN_PER_DAY, MIN_SIZE, MAX_SIZE, RECOUP_TIME, BEE_COLLECTION_RATE, WORLD_SIZE, Y } from './parameters';
+import { BEE_COLLECTION_TIME, MIN_PER_DAY, MIN_SIZE, MAX_SIZE, RECOUP_TIME, BEE_COLLECTION_RATE, WORLD_SIZE, MIN_PATCH_DISTANCE, Y } from './parameters';
 
 
 export class Location {
@@ -35,9 +35,21 @@ export class Patch extends Location {
     static NECTAR = new THREE.Color().setRGB(0.039, 0.165, 0.361);
     static POLLEN = new THREE.Color().setRGB(0.878, 0.741, 0.043);
     static label = 0;
+    static minDistance = WORLD_SIZE;
 
     static reset() {
         Patch.label = 0;
+    }
+
+    /**
+     * @param {Array<Patch>} patches
+     */
+    static updateMinDistance(patches) {
+        for (let i = 0; i < patches.length - 1; i++) {
+            for (let j = i + 1; j < patches.length; j++) {
+                Patch.minDistance = Math.min(Patch.minDistance, patches[i].position.distanceTo(patches[j].position));
+            }
+        }
     }
 
     constructor(frustumSize, provided_x, provided_z) {
@@ -78,7 +90,7 @@ export class Patch extends Location {
         this.nectarBaseLevel = 2 * this.radius;
         this.nectarLevel = this.nectarBaseLevel;
         this.recoupTimer = 0;
-        this.averageAttractiveness = randInt(1, 100) / 100;
+        this.sugarContent = randInt(3, 80) / 100;
 
         this.circleSegments = 64;
         this.nectarCircleGeometry = new THREE.CircleGeometry(this.radius + 1, this.circleSegments, 0, Math.PI * 2);
@@ -128,27 +140,65 @@ export class Patch extends Location {
 
 
     /**
+     * @param {THREE.Vector3} beePosition
      * @param {Hive} hive
      * @param {number} time 
+     * @param {number} numPatches
      */
-    getWeight(hive, time, numPatches) {
-        const maxWeight = 0.5 * WORLD_SIZE / Math.sqrt(numPatches);
-        const halfMaxWeight = maxWeight / 2;
+    getWeight(beePosition, hive, time, numPatches) {
+        /*
+            want some points s.t. p_i.distanceTo(p_i)^2 - w_i < p_i.distanceTo(p_j)^2 - w_j
+            (the area around p_i has a smaller cost than if it belonged to p_j)
+            p_i.distanceTo(p_i) = 0
+            p_i.distanceTo(p_j) >= the minimum distance in the Poisson disk sampling d_min
+            Therefore:
+            0 - w_i < d_min^2 - w_j
+            w_j - w_i < d_min^2
+            If p_j has the largest possible weight and p_i the smallest (0),
+            w_j < d_min^2 should always be true
+            d_min is known :D
+            Some constant in [0, 1) can ensure the inequality holds
+        */
+        const maxWeight = 0.85 * (Patch.minDistance ** 2);
 
-        const maxDistance = Math.sqrt(2 * Math.pow(WORLD_SIZE - 20, 2))
+        const maxDistance = Math.SQRT2 * (WORLD_SIZE - 40);
+        // const maxDistance = Math.max(
+        //     beePosition.distanceTo(new THREE.Vector3(-WORLD_SIZE / 2, Y, -WORLD_SIZE / 2)),
+        //     beePosition.distanceTo(new THREE.Vector3(-WORLD_SIZE / 2, Y, WORLD_SIZE / 2)),
+        //     beePosition.distanceTo(new THREE.Vector3(WORLD_SIZE / 2, Y, -WORLD_SIZE / 2)),
+        //     beePosition.distanceTo(new THREE.Vector3(WORLD_SIZE / 2, Y, WORLD_SIZE / 2))
+        // );
+        // const halfwayDistance = maxDistance * 0.2;
+        const distance = beePosition.distanceTo(this.position);
 
         const p_h = hive.position;
         const p_t = this.position;
+        const a = this.sugarContent;
         const size = this.nectarBaseLevel;
         const n = this.nectarLevel;
         const b = this.beesPresent;
 
         const daylightFactor = this.#getDaylightFactor(p_h, p_t, time);
-        const weightFactor = (
-            90 * (n * n / size) * 10 * 1 / (b / 2 + 1)
-        ) / 100;
+        const distanceFromBee = beePosition.distanceTo(this.position);
+        const normalizedDistanceFromBee = Math.min(1, distanceFromBee / maxDistance);
+        const distanceFactor = 1 / (1 + Math.pow(4 * normalizedDistanceFromBee, 2));
 
-        return daylightFactor * (halfMaxWeight * weightFactor + halfMaxWeight);
+        const nectarFactor = Math.sqrt(n / size) * Math.min(1, a / 0.5);
+        const flowerFactor = size / MAX_SIZE;
+        const beesFactor = 1 / (1 + (b / size));
+        const rawFactor = Math.max(
+            0,
+            Math.min(
+                0.65 * nectarFactor + 0.10 * flowerFactor + 0.10 * beesFactor + 0.15 * distanceFactor, 
+                1
+            )
+        );
+        // scaling nonlinearly to make things more interesting
+        const weightFactor = rawFactor ** 3;
+
+        // console.log(weightFactor, maxWeight, daylightFactor * weightFactor * maxWeight);
+
+        return daylightFactor * weightFactor * maxWeight;
     }
 
 
@@ -158,15 +208,15 @@ export class Patch extends Location {
      * @param {number} size The total nectar capacity of the target.
      * @param {number} n The current nectar capacity of the target.
      * @param {number} b The current number of bees at the target.
-     * @param {number} t The time of day (any number in [0, 24)).
+     * @param {number} t The time of day (any number in [0, 1)).
      * @param {number} a The average attractiveness of flowers in the target patch.
      * @returns {number} The weight of the patch. 
     */
 
     /**
-     * @param {THREE.Vector3} p_h 
-     * @param {THREE.Vector3} p_t 
-     * @param {number} t
+     * @param {THREE.Vector3} p_h The location of the hive.
+     * @param {THREE.Vector3} p_t The location of the target patch.
+     * @param {number} t The time of day (any number in [0, 1)).
      */
     #getDaylightFactor(p_h, p_t, t) {
         const a = 1;
@@ -175,8 +225,15 @@ export class Patch extends Location {
         const k2 = 0.73402801;
         const s2 = 0.02548398;
         const c = 0;
+
+        const maxDistance = (WORLD_SIZE - 20) / 2 * Math.SQRT2;
+        const normalizedDistance = Math.min(1, p_h.distanceTo(p_t) / maxDistance);
+        const maxNightShift = 0.005; // add bee speed
+        const shiftedK1 = k1 - (normalizedDistance * maxNightShift);
+        const shiftedK2 = k2 - (normalizedDistance * maxNightShift);
+
         const r = 1.0 / (1 + Math.exp(-1 * (t - k1) / s1));
-        const f = 1.0 / (1 + Math.exp((t - k2) / s2));
+        const f = 1.0 / (1 + Math.exp((t - shiftedK2) / s2));
         return a * r * f + c
     }
 }
