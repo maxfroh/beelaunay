@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { randInt } from 'three/src/math/MathUtils.js';
-import { BEE_COLLECTION_TIME, MIN_PER_DAY, RECOUP_TIME, BEE_COLLECTION_RATE, WORLD_SIZE } from './parameters';
+import { BEE_COLLECTION_TIME, MIN_PER_DAY, MIN_SIZE, MAX_SIZE, RECOUP_TIME, BEE_COLLECTION_RATE, WORLD_SIZE, Y } from './parameters';
 
 
 export class Location {
@@ -15,7 +15,7 @@ export class Hive extends Location {
         super();
         this.scene = scene;
         const x = 0;
-        const y = 4;
+        const y = Y;
         const z = 0;
         this.radius = 4;
         this.segments = 6;
@@ -32,7 +32,13 @@ export class Hive extends Location {
 
 export class Patch extends Location {
     static BLACK = new THREE.Color().setHSL(0, 0, 0);
+    static NECTAR = new THREE.Color().setRGB(0.039, 0.165, 0.361);
+    static POLLEN = new THREE.Color().setRGB(0.878, 0.741, 0.043);
     static label = 0;
+
+    static reset() {
+        Patch.label = 0;
+    }
 
     constructor(frustumSize, provided_x, provided_z) {
         super();
@@ -50,7 +56,7 @@ export class Patch extends Location {
             x = provided_x;
         }
 
-        const y = 4;
+        const y = Y;
 
         var z;
         if (provided_z === null) {
@@ -58,7 +64,7 @@ export class Patch extends Location {
         } else {
             z = provided_z;
         }
-        this.radius = randInt(1, 3);
+        this.radius = randInt(MIN_SIZE, MAX_SIZE);
         const segments = 6;
 
         this.position = new THREE.Vector3(x, y, z);
@@ -67,14 +73,24 @@ export class Patch extends Location {
             `hsl(${randInt(270, 320)}, ${randInt(50, 80)}%, ${randInt(50, 80)}%)`
         )
         this.material = new THREE.MeshPhongMaterial({ color: this.color, side: THREE.DoubleSide });
-        this.mesh = new THREE.Mesh(this.geometry, this.material)
-        this.mesh.position.copy(this.position);
-        this.mesh.rotation.x = -Math.PI / 2
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
 
-        this.nectarBaseLevel = randInt(6, 8) * this.radius;
+        this.nectarBaseLevel = 2 * this.radius;
         this.nectarLevel = this.nectarBaseLevel;
         this.recoupTimer = 0;
         this.averageAttractiveness = randInt(1, 100) / 100;
+
+        this.circleSegments = 64;
+        this.nectarCircleGeometry = new THREE.CircleGeometry(this.radius + 1, this.circleSegments, 0, Math.PI * 2);
+        this.nectarCircleMaterial = new THREE.MeshPhongMaterial({ color: Patch.NECTAR, side: THREE.DoubleSide });
+        this.nectarCircleMesh = new THREE.Mesh(this.nectarCircleGeometry, this.nectarCircleMaterial);
+        this.nectarCircleMesh.position.copy(new THREE.Vector3(0, 0, -1));
+
+        this.object = new THREE.Group();
+        this.object.add(this.mesh);
+        this.object.add(this.nectarCircleMesh);
+        this.object.position.copy(this.position);
+        this.object.rotation.x = -Math.PI / 2;
     }
 
 
@@ -93,6 +109,8 @@ export class Patch extends Location {
                 this.nectarLevel + delta
             );
         }
+        const numSegments = Math.floor(this.circleSegments * this.nectarLevel / this.nectarBaseLevel);
+        this.nectarCircleGeometry.setDrawRange(0, numSegments * 3);
     }
 
     collectNectar(delta) {
@@ -113,8 +131,24 @@ export class Patch extends Location {
      * @param {Hive} hive
      * @param {number} time 
      */
-    getWeight(hive, time) {
-        return this.#f(hive.position, this.position, this.nectarBaseLevel, this.nectarLevel, this.beesPresent, time, this.averageAttractiveness);
+    getWeight(hive, time, numPatches) {
+        const maxWeight = 0.5 * WORLD_SIZE / Math.sqrt(numPatches);
+        const halfMaxWeight = maxWeight / 2;
+
+        const maxDistance = Math.sqrt(2 * Math.pow(WORLD_SIZE - 20, 2))
+
+        const p_h = hive.position;
+        const p_t = this.position;
+        const size = this.nectarBaseLevel;
+        const n = this.nectarLevel;
+        const b = this.beesPresent;
+
+        const daylightFactor = this.#getDaylightFactor(p_h, p_t, time);
+        const weightFactor = (
+            90 * (n * n / size) * 10 * 1 / (b / 2 + 1)
+        ) / 100;
+
+        return daylightFactor * (halfMaxWeight * weightFactor + halfMaxWeight);
     }
 
 
@@ -128,32 +162,21 @@ export class Patch extends Location {
      * @param {number} a The average attractiveness of flowers in the target patch.
      * @returns {number} The weight of the patch. 
     */
-    #f(p_h, p_t, size, n, b, t, a) {
-        const maxDistance = Math.sqrt(2 * Math.pow(WORLD_SIZE - 20, 2))
-        const daylightFactor = this.#q(p_h, p_t, t);
-        return (
-            1 + (n * n / size) * daylightFactor / (b + 1) * (maxDistance * 0.15)
-        );
-    }
 
     /**
      * @param {THREE.Vector3} p_h 
      * @param {THREE.Vector3} p_t 
      * @param {number} t
      */
-    #q(p_h, p_t, t) {
-        // const squeezeFactor = 1;
-        // const squeezed_p_h = p_h.clone().multiplyScalar(squeezeFactor);
-        // const squeezed_p_t = p_t.clone().multiplyScalar(squeezeFactor);
-        // const m = squeezeFactor * Math.abs(this.upperBound - this.lowerBound) / 2; // maximum distance possible from hive along x/z-axis
-        // const d_max = Math.sqrt(2 * Math.pow(m, 2)); // maximum distance (sqrt[m^2 + m^2])
-        // const d = squeezed_p_h.distanceTo(squeezed_p_t) / d_max; // normalize distance
-        const daylightFactor = -10 * Math.pow(2 * t - 1.15, 4) + 1;
-        const v = 1 - Math.max(0, daylightFactor);
-        // const distanceDaylightFactor = d / Math.pow(0.3 * Patch.#z(t), -1 * d);
-        // const maxDDF = 10 / 3;
-        // const normalizedDDF = distanceDaylightFactor / maxDDF;
-        return v / (p_h.distanceTo(p_t) / 200 + 1);
-        // return 1;
+    #getDaylightFactor(p_h, p_t, t) {
+        const a = 1;
+        const k1 = 0.3227;
+        const s1 = 0.0227;
+        const k2 = 0.73402801;
+        const s2 = 0.02548398;
+        const c = 0;
+        const r = 1.0 / (1 + Math.exp(-1 * (t - k1) / s1));
+        const f = 1.0 / (1 + Math.exp((t - k2) / s2));
+        return a * r * f + c
     }
 }

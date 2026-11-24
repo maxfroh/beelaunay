@@ -1,10 +1,9 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/Addons.js';
-import { randInt } from 'three/src/math/MathUtils.js';
+import { randFloat, randInt } from 'three/src/math/MathUtils.js';
 import { Patch } from './location';
-import { BEE_COLLECTION_TIME, BEE_NECTAR_CAPACITY, EMPTY_BEE_SPEED, MIN_PER_DAY, MILES_TO_UNIT } from './parameters';
-import { weightedVoronoi } from 'd3-weighted-voronoi';
-import { processVoronoi, drawVoronoi } from './voronoi';
+import { BEE_COLLECTION_TIME, BEE_NECTAR_CAPACITY, EMPTY_BEE_SPEED, MIN_PER_DAY, MILES_TO_UNIT, WAKE_UP_TIME, SLEEP_TIME } from './parameters';
+import { getVoronoiCells, drawVoronoi } from './voronoi';
 
 
 export class Bee {
@@ -52,8 +51,10 @@ export class Bee {
      * @param {Hive} hive  
      * @param {Array<Patch>} patches 
      */
-    constructor(scene, renderer, frustumSize, hive, patches) {
+    constructor(scene, renderer, frustumSize, hive, patches, currTime) {
         this.scene = scene;
+        this.hive = hive;
+        this.patches = patches;
 
         if (Bee.isLoaded) {
             this.initMesh();
@@ -63,19 +64,19 @@ export class Bee {
             });
         }
 
-        this.hive = hive;
-        this.patches = patches;
         this.goingHome = false;
         this.gatheringNectar = false;
         this.nectarCollected = 0;
         this.nectarTimer = 0;
+        this.wakeUpTime = WAKE_UP_TIME + randFloat(-0.04, 0.04);
+        this.sleepTime = SLEEP_TIME + randFloat(-0.04, 0.04)
 
         this.lowerBound = Math.min(frustumSize * .1, 10);
         this.upperBound = Math.max(frustumSize * .9, frustumSize - 10);
         this.centerMargin = frustumSize / 2;
-        this.target = this.getNewTarget();
+        this.target = this.getNewTarget(currTime);
 
-        this.voronoi_cells = null;
+        this.voronoi = null;
         this.active_bee = false;
     }
 
@@ -85,6 +86,17 @@ export class Bee {
         // this.originalColor = this.mesh.material.color.clone();
         this.hive.bees_present += 1;
         this.scene.add(this.mesh);
+    }
+
+    destroy() {
+        if (this.mesh) {
+            this.scene.remove(this.mesh);
+            this.mesh = null;
+        }
+        this.target = null;
+        this.voronoi = null;
+        this.patches = null;
+        this.hive = null;
     }
 
     setActive() {
@@ -102,15 +114,6 @@ export class Bee {
      * @param {number} delta 
      */
     update(delta, currTime) {
-        if (this.voronoi_cells === null) {
-            // this.currPatches = this.patches.filter(patch => patch.position != this.target.position);
-            this.voronoi_cells = processVoronoi(this.target, this.patches, currTime);
-            // if (this.active_bee) {
-            //     drawVoronoi(this.voronoi_cells, this.scene);
-            // }
-        }
-
-        // console.log("Current state:", { gathering: this.gatheringNectar, timer: this.nectarTimer, collected: this.nectarCollected, target: this.target });
         if (this.gatheringNectar) {
             this.nectarTimer += delta;
 
@@ -127,9 +130,9 @@ export class Bee {
                     this.goingHome = true;
                     this.target = this.hive;
                 } else {
-                    this.target = this.getNewTarget();
+                    this.target = this.getNewTarget(currTime);
                     // this.currPatches = this.patches.filter(patch => patch.position != this.target.position);
-                    this.voronoi_cells = processVoronoi(this.target, this.patches, currTime);
+                    // this.voronoi_cells = processVoronoi(this.target, this.patches, currTime);
                     // if (this.active_bee) {
                     //     drawVoronoi(this.voronoi_cells, this.scene);
                     // }
@@ -141,18 +144,18 @@ export class Bee {
         }
 
         if (this.active_bee) {
-            this.voronoi_cells = processVoronoi(this.target, this.patches, currTime);
-            drawVoronoi(this.voronoi_cells, this.scene, this.target);
+            this.voronoi = getVoronoiCells(this.target, this.patches, currTime);
+            drawVoronoi(this.voronoi.cells, this.voronoi.adjacencyMap, this.scene, this.target);
         }
 
-        this.move(delta);
+        this.move(delta, currTime);
 
     }
 
     /**
      * @param {number} delta 
      */
-    move(delta) {
+    move(delta, currTime) {
         // don't move if the mesh is not loaded
         if (!this.mesh || !this.target) {
             return;
@@ -171,7 +174,7 @@ export class Bee {
             } else {
                 this.nectarCollected = 0;
                 this.goingHome = false;
-                this.target = this.getNewTarget();
+                this.target = this.getNewTarget(currTime);
             }
         } else {
             const direction = new THREE.Vector3().subVectors(this.target.position, this.mesh.position).normalize();
@@ -183,23 +186,50 @@ export class Bee {
     /**
      * @returns {Patch}
      */
-    getNewTarget() {
-        let newTarget = this.patches[Math.floor(Math.random() * this.patches.length)];
+    getNewTarget(currTime) {
+        if (this.sleepTime < currTime || currTime < this.wakeUpTime) {
+            return this.hive;
+        }
+
+        if (this.target != null) {
+            this.voronoi = getVoronoiCells(this.target, this.patches, currTime);
+        }
+
+        const getPatch = () => {
+            const adjMap = this.voronoi?.adjacencyMap?.[this.target?.name];
+            if (Array.isArray(adjMap) && adjMap.length > 0) {
+                const randomIndex = adjMap[Math.floor(Math.random() * adjMap.length)]
+                return this.patches[randomIndex];
+            }
+            return this.patches[Math.floor(Math.random() * this.patches.length)];
+        }
+
+        let newTarget = getPatch();
         let tries = 10;
+
+        // if (this.voronoi == null || this.target?.name == null) {
+        //     newTarget = this.patches[Math.floor(Math.random() * this.patches.length)];
+        // } else {
+        //     let adjMap = this.voronoi.adjacencyMap[this.target.name];
+        //     newTarget = this.patches[adjMap[Math.floor(Math.random() * adjMap.length)]];
+        // }
 
         if (this.target && this.target !== this.hive) {
             while (
+                !newTarget ||
                 newTarget === this.target ||
                 (newTarget.nectarLevel !== undefined && newTarget.nectarLevel <= 0)
             ) {
-                newTarget = this.patches[Math.floor(Math.random() * this.patches.length)];
+                // let adjMap = this.voronoi.adjacencyMap[this.target.name];
+                // newTarget = this.patches[adjMap[Math.floor(Math.random() * adjMap.length)]];
                 tries -= 1;
                 if (tries <= 0) {
-                    // console.log("Couldn't find anyone... going home!");
+                    console.log("Couldn't find anyone... going home!");
                     this.goingHome = true;
                     this.gatheringNectar = false;
                     return this.hive;
                 }
+                newTarget = getPatch();
             }
         }
         return newTarget;

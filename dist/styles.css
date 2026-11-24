@@ -100,13 +100,14 @@ h2.subtitle {
 
 .btn-outline-primary,
 .btn-primary {
-  border-color: #1E3741 !important;
-  color: #000000 !important;
+  background-color: #3C575B !important;
+  border-color: #2B474E !important;
+  color: #eeeeee !important;
 }
 
 .btn-outline-primary:hover,
 .btn-primary:hover {
-  background-color: #3C575B !important;
+  background-color: #2B474E !important;
   border-color: #1E3741 !important;
   color: #ffffff !important;
 }

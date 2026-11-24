@@ -40,7 +40,70 @@
               </div>
               <hr>
               <div class="row justify-content-center">
-                <div class="col-12" id="simulation"> <!-- use id to jump to simulation -->
+                <div class="col-3" id="parameter-input">
+                  <div>
+                    <label for="num-patches-range">Number of Flower Patches:</label>
+                    <input type="range" id="num-patches-range" min="2" max="120" step="1" , value="80">
+                    <input type="number" id="num-patches-number" min="2" max="120" value="80">
+                  </div>
+                  <script>
+                    $(function () {
+                      const $rangeInput = $("#num-patches-range");
+                      const $numberInput = $("#num-patches-number");
+                      $rangeInput.on("input", function () {
+                        $numberInput.val($(this).val());
+                      });
+                      $numberInput.on("input", function () {
+                        let val = Number($(this).val());
+                        val = Math.min(Math.max(2, val), 120);
+                        $rangeInput.val(val);
+                      });
+                      $numberInput.on("blur", function() {
+                        if ($numberInput.val() === '' || Number($numberInput.val() < 2)) {
+                          $numberInput.val(2);
+                        } else if (Number($numberInput.val()) > 120) {
+                          $numberInput.val(120);
+                        } 
+                        $rangeInput.val($numberInput.val());
+                      })
+                    });
+                  </script>
+                  <div>
+                    <label for="num-bees-range">Number of Bees:</label>
+                    <input type="range" id="num-bees-range" min="2" max="40" step="1" , value="10">
+                    <input type="number" id="num-bees-number" min="2" max="40" value="10">
+                  </div>
+                  <script>
+                    const rangeInput = document.getElementById("num-bees-range");
+                    const numberInput = document.getElementById("num-bees=number");
+                  </script>
+                  <script>
+                    $(function () {
+                      const $rangeInput = $("#num-bees-range");
+                      const $numberInput = $("#num-bees-number");
+                      $rangeInput.on("input", function () {
+                        $numberInput.val($(this).val());
+                      });
+                      $numberInput.on("input", function () {
+                        let val = Number($(this).val());
+                        val = Math.min(Math.max(2, val), 40);
+                        $rangeInput.val(val);
+                      });
+                      $numberInput.on("blur", function() {
+                        if ($numberInput.val() === '' || Number($numberInput.val() < 2)) {
+                          $numberInput.val(2);
+                        } else if (Number($numberInput.val()) > 40) {
+                          $numberInput.val(40);
+                        } 
+                        $rangeInput.val($numberInput.val());
+                      })
+                    });
+                  </script>
+                  <div class="mt-3">
+                    <button id="restart-btn" class="btn btn-primary w-100">Restart Simulation</button>
+                  </div>
+                </div>
+                <div class="col-9" id="simulation"> <!-- use id to jump to simulation -->
                   <div id="canvas-container"> <!-- only let it run if it is in view -->
                     <div id="clock-text">
                       Day <span id="current-day">0</span> <span id="current-time">00:00</span>
