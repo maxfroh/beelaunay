@@ -157,16 +157,10 @@ export class Bee {
                 this.gatheringNectar = false;
 
                 if (this.nectarCollected >= BEE_NECTAR_CAPACITY) {
-                    console.log("I'm full!");
                     this.goingHome = true;
                     this.target = this.hive;
                 } else {
                     this.target = this.getNewTarget(currTime);
-                    // this.currPatches = this.patches.filter(patch => patch.position != this.target.position);
-                    // this.voronoi_cells = processVoronoi(this.target, this.patches, currTime);
-                    // if (this.active_bee) {
-                    //     drawVoronoi(this.voronoi_cells, this.scene);
-                    // }
                     if (this.target === this.hive) {
                         this.goingHome = true;
                     }

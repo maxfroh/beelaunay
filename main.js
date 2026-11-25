@@ -8,6 +8,7 @@ import { MAX_NUM_BEES, NUM_PATCHES, MIN_PER_DAY, WORLD_SIZE, MIN_PATCH_DISTANCE 
 
 // persistent DOM queries
 const container = document.getElementById("canvas-container");
+const simulationColumn = document.getElementById("simulation");
 const clockTime = document.getElementById("current-time");
 const clockDay = document.getElementById("current-day");
 
@@ -20,8 +21,17 @@ const activeBeeLabel = document.getElementById("active-bee-selection-label");
 const activeBeeSelection = document.getElementById("active-bee-selection");
 
 // renderer
-function getWindowSize() {
-    let size = Math.min(container.clientWidth, container.clientHeight);
+/**
+ * @param {boolean} isUpdate if the window size fetch is occuring on a screen resize or not
+ */
+function getWindowSize(isUpdate) {
+    let size;
+    console.log(simulationColumn.clientWidth);
+    if (isUpdate) {
+        size = simulationColumn.clientWidth;
+    } else {
+        size = Math.min(container.clientWidth, container.clientHeight);
+    }
     if (window.innerHeight * 0.96 > 0) {
         size = Math.min(size, window.innerHeight * 0.96);
     }
@@ -29,7 +39,7 @@ function getWindowSize() {
 }
 
 const renderer = new THREE.WebGLRenderer();
-const windowSize = getWindowSize();
+const windowSize = getWindowSize(false);
 container.setAttribute("style", `width: ${windowSize}px`);
 renderer.setSize(windowSize, windowSize);
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -44,13 +54,15 @@ const aspect = 1;
 const frustumSize = WORLD_SIZE;
 
 window.addEventListener("resize", () => {
-    const updatedSize = getWindowSize();
+    console.log("updating size");
+    const updatedSize = getWindowSize(true);
     camera.left = -frustumSize * aspect / 2;
     camera.right = frustumSize * aspect / 2;
     camera.top = frustumSize / 2;
     camera.bottom = -frustumSize / 2;
     camera.updateProjectionMatrix();
     renderer.setSize(updatedSize, updatedSize);
+    console.log(`${container.style.width} => width: ${updatedSize}px`)
     container.setAttribute("style", `width: ${updatedSize}px`);
 });
 
@@ -72,19 +84,20 @@ patchesNumberInput.addEventListener("blur", () => {
     patchesRangeInput.value = patchesNumberInput.value;
 });
 
+beesRangeInput.max = MAX_NUM_BEES;
 beesRangeInput.addEventListener("input", () => {
     beesNumberInput.value = beesRangeInput.value;
 });
 beesNumberInput.addEventListener("input", () => {
     let val = beesNumberInput.value;
-    val = Math.min(Math.max(2, val), 60);
+    val = Math.min(Math.max(2, val), MAX_NUM_BEES);
     beesRangeInput.value = val;
 });
 beesNumberInput.addEventListener("blur", () => {
     if (beesNumberInput.value === '' || Number(beesNumberInput.value) < 2) {
         beesNumberInput.value = 2;
-    } else if (Number(beesNumberInput.value) > 60) {
-        beesNumberInput.value = 60;
+    } else if (Number(beesNumberInput.value) > MAX_NUM_BEES) {
+        beesNumberInput.value = MAX_NUM_BEES;
     }
     beesRangeInput.value = beesNumberInput.value;
 });

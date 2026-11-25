@@ -1,6 +1,6 @@
 // environment
 export const MIN_PER_DAY = 0.5;
-export const MAX_NUM_BEES = 40;//200;
+export const MAX_NUM_BEES = 60;//200;
 export const NUM_PATCHES = 80;
 export const WORLD_SIZE = 400;
 export const MIN_PATCH_DISTANCE = WORLD_SIZE / 20;
