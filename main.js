@@ -1,19 +1,23 @@
-import * as THREE from 'three';
-import PoissonDiskSampling from 'poisson-disk-sampling';
+import * as THREE from "three";
+import PoissonDiskSampling from "poisson-disk-sampling";
 
-import { Hive, Patch } from './location.js';
-import { Bee } from './bee.js';
-import { MAX_NUM_BEES, NUM_PATCHES, MIN_PER_DAY, WORLD_SIZE, MIN_PATCH_DISTANCE } from './parameters.js';
+import { Hive, Patch } from "./location.js";
+import { Bee } from "./bee.js";
+import { MAX_NUM_BEES, NUM_PATCHES, MIN_PER_DAY, WORLD_SIZE, MIN_PATCH_DISTANCE } from "./parameters.js";
 
 
 // persistent DOM queries
-const container = document.getElementById('canvas-container');
-const clockTime = document.getElementById('current-time');
-const clockDay = document.getElementById('current-day');
+const container = document.getElementById("canvas-container");
+const clockTime = document.getElementById("current-time");
+const clockDay = document.getElementById("current-day");
 
-const patchesInput = document.getElementById("num-patches-number");
-const beesInput = document.getElementById("num-bees-number");
 const restartButton = document.getElementById("restart-btn");
+const patchesRangeInput = document.getElementById("num-patches-range");
+const patchesNumberInput = document.getElementById("num-patches-number");
+const beesRangeInput = document.getElementById("num-bees-range");
+const beesNumberInput = document.getElementById("num-bees-number");
+const activeBeeLabel = document.getElementById("active-bee-selection-label");
+const activeBeeSelection = document.getElementById("active-bee-selection");
 
 // renderer
 function getWindowSize() {
@@ -34,11 +38,12 @@ container.prepend(renderer.domElement);
 let scene;
 let camera;
 let bees = [];
+let activeBeeIndex = 0;
 let patches = [];
 const aspect = 1;
 const frustumSize = WORLD_SIZE;
 
-window.addEventListener('resize', () => {
+window.addEventListener("resize", () => {
     const updatedSize = getWindowSize();
     camera.left = -frustumSize * aspect / 2;
     camera.right = frustumSize * aspect / 2;
@@ -49,8 +54,72 @@ window.addEventListener('resize', () => {
     container.setAttribute("style", `width: ${updatedSize}px`);
 });
 
+// event listeners for inputs
+patchesRangeInput.addEventListener("input", () => {
+    patchesNumberInput.value = patchesRangeInput.value;
+});
+patchesNumberInput.addEventListener("input", () => {
+    let val = patchesNumberInput.value;
+    val = Math.min(Math.max(2, val), 120);
+    patchesRangeInput.value = val;
+});
+patchesNumberInput.addEventListener("blur", () => {
+    if (patchesNumberInput.value === '' || Number(patchesNumberInput.value) < 2) {
+        patchesNumberInput.value = 2;
+    } else if (Number(patchesNumberInput.value) > 120) {
+        patchesNumberInput.value = 120;
+    }
+    patchesRangeInput.value = patchesNumberInput.value;
+});
+
+beesRangeInput.addEventListener("input", () => {
+    beesNumberInput.value = beesRangeInput.value;
+});
+beesNumberInput.addEventListener("input", () => {
+    let val = beesNumberInput.value;
+    val = Math.min(Math.max(2, val), 60);
+    beesRangeInput.value = val;
+});
+beesNumberInput.addEventListener("blur", () => {
+    if (beesNumberInput.value === '' || Number(beesNumberInput.value) < 2) {
+        beesNumberInput.value = 2;
+    } else if (Number(beesNumberInput.value) > 60) {
+        beesNumberInput.value = 60;
+    }
+    beesRangeInput.value = beesNumberInput.value;
+});
+
+activeBeeSelection.addEventListener("input", () => {
+    bees[activeBeeIndex].setInactive();
+    if (activeBeeSelection.value === '' || Number(activeBeeSelection.value) < 0) {
+        activeBeeSelection.value = 0;
+    } else if (Number(activeBeeSelection.value) > Number(beesNumberInput.max)) {
+        activeBeeSelection.value = Number(beesNumberInput.max);
+    }
+    activeBeeIndex = Number(activeBeeSelection.value) - 1;
+    bees[activeBeeIndex].setActive();
+});
+activeBeeSelection.addEventListener("blur", () => {
+    bees[activeBeeIndex].setInactive();
+    if (activeBeeSelection.value === '' || Number(activeBeeSelection.value) < 0) {
+        activeBeeSelection.value = 0;
+    } else if (Number(activeBeeSelection.value) > Number(beesNumberInput.max)) {
+        activeBeeSelection.value = Number(beesNumberInput.max);
+    }
+    activeBeeIndex = Number(activeBeeSelection.value) - 1;
+    bees[activeBeeIndex].setActive();
+});
+
+
+function restart() {
+    activeBeeSelection.max = beesNumberInput.value;
+    activeBeeLabel.innerText = `Active bee (1-${beesNumberInput.value}):`;
+
+    startSimulation();
+}
 
 function startSimulation() {
+
     // reset animation
     renderer.setAnimationLoop(null);
 
@@ -80,8 +149,8 @@ function startSimulation() {
         });
     }
 
-    const numPatches = parseInt(patchesInput.value, 10) || NUM_PATCHES;
-    const numBees = parseInt(beesInput.value, 10) || MAX_NUM_BEES;
+    const numPatches = parseInt(patchesRangeInput.value, 10) || NUM_PATCHES;
+    const numBees = parseInt(beesRangeInput.value, 10) || MAX_NUM_BEES;
 
     scene = new THREE.Scene();
 
@@ -154,8 +223,8 @@ function startSimulation() {
         const bee = new Bee(scene, renderer, frustumSize, hive, patches, currTime);
         bees.push(bee);
     }
-    bees[0].active_bee = true;
 
+    bees[0].setActive();
 
     function animate(time) {
         if (lastTime === 0) {
@@ -199,5 +268,5 @@ function startSimulation() {
     renderer.setAnimationLoop(animate);
 }
 
-restartButton.addEventListener('click', startSimulation);
-startSimulation();
+restartButton.addEventListener("click", restart);
+restart();

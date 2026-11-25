@@ -21,7 +21,7 @@ export const SLEEP_TIME = 20 / 24;
 export const HONEY_PER_LARVA = 1;
 
 // flower factors
-export const RECOUP_TIME = 0.25; // 6 hours to recover 1 nectar
+export const RECOUP_TIME = 6 / 24; // 6 hours to recover 1 nectar
 export const MAX_SIZE = 5;
 export const MIN_SIZE = 1;
 

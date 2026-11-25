@@ -118,7 +118,7 @@ export class Patch extends Location {
             this.recoupTimer = 0;
             this.nectarLevel = Math.min(
                 this.nectarBaseLevel,
-                this.nectarLevel + delta
+                this.nectarLevel + delta / RECOUP_TIME
             );
         }
         const numSegments = Math.floor(this.circleSegments * this.nectarLevel / this.nectarBaseLevel);
@@ -183,13 +183,13 @@ export class Patch extends Location {
         const normalizedDistanceFromBee = Math.min(1, distanceFromBee / maxDistance);
         const distanceFactor = 1 / (1 + Math.pow(4 * normalizedDistanceFromBee, 2));
 
-        const nectarFactor = Math.sqrt(n / size) * Math.min(1, a / 0.5);
+        const nectarFactor = Math.pow(n / size, 2) * Math.min(1, a / 0.5);
         const flowerFactor = size / MAX_SIZE;
         const beesFactor = 1 / (1 + (b / size));
         const rawFactor = Math.max(
             0,
             Math.min(
-                0.65 * nectarFactor + 0.10 * flowerFactor + 0.10 * beesFactor + 0.15 * distanceFactor, 
+                0.75 * nectarFactor + 0.10 * flowerFactor + 0.05 * beesFactor + 0.10 * distanceFactor, 
                 1
             )
         );

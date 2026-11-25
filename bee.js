@@ -58,8 +58,9 @@ export class Bee {
 
         if (Bee.isLoaded) {
             this.initMesh();
+            this.ready = Promise.resolve();
         } else {
-            Bee.loadBeeModel(renderer).then(() => {
+            this.ready = Bee.loadBeeModel(renderer).then(() => {
                 this.initMesh();
             });
         }
@@ -71,8 +72,8 @@ export class Bee {
         this.wakeUpTime = WAKE_UP_TIME + randFloat(-0.04, 0.04);
         this.sleepTime = SLEEP_TIME + randFloat(-0.04, 0.04)
 
-        this.lowerBound = Math.min(frustumSize * .1, 10);
-        this.upperBound = Math.max(frustumSize * .9, frustumSize - 10);
+        this.lowerBound = Math.min(frustumSize * 0.1, 10);
+        this.upperBound = Math.max(frustumSize * 0.9, frustumSize - 10);
         this.centerMargin = frustumSize / 2;
         this.target = this.getNewTarget(currTime);
 
@@ -82,17 +83,41 @@ export class Bee {
     }
 
     initMesh() {
+        this.group = new THREE.Group();
         this.mesh = Bee.beeTemplate.clone(true);
-        this.mesh.position.copy(this.hive.position);
-        // this.originalColor = this.mesh.material.color.clone();
+        this.mesh.position.copy(new THREE.Vector3(0, 1, 0));
+
+        this.circleGeometry = new THREE.CircleGeometry(3, 64, 0, Math.PI * 2);
+        this.circleMaterial = new THREE.MeshPhongMaterial({ color: 0xf5b85d, transparent: true, opacity: 0, side: THREE.DoubleSide });
+        this.circleMesh = new THREE.Mesh(this.circleGeometry, this.circleMaterial);
+        this.circleMesh.position.copy(new THREE.Vector3(0, 0.5, -0.5));
+        this.circleMesh.rotation.x = -Math.PI / 2
+
         this.hive.bees_present += 1;
-        this.scene.add(this.mesh);
+
+        this.group.add(this.mesh);
+        this.group.add(this.circleMesh);
+
+        this.group.position.copy(this.hive.position);
+
+        this.scene.add(this.group);
     }
 
     destroy() {
-        if (this.mesh) {
-            this.scene.remove(this.mesh);
-            this.mesh = null;
+        if (this.group) {
+            this.group.traverse((child) => {
+                if (child.isMesh) {
+                    child.geometry?.dispose();
+                }
+
+                if (Array.isArray(child.material)) {
+                    child.material.forEach((material) => material.dispose());
+                } else {
+                    child.material?.dispose();
+                }
+            });
+            this.scene.remove(this.group);
+            this.group = null;
         }
         this.target = null;
         this.voronoi = null;
@@ -101,15 +126,20 @@ export class Bee {
     }
 
     setActive() {
-        this.active_bee = false;
-        // this.mesh.material.color.set("rgb(255, 0, 0)");
+        this.active_bee = true;
+        this.ready.then(() => {
+            if (this.circleMesh) {
+                this.circleMesh.material.opacity = 1;
+            }
+        });
     }
 
     setInactive() {
         this.active_bee = false;
-        // this.mesh.material.color.set(this.originalColor);
+        if (this.circleMesh) {
+            this.circleMesh.material.opacity = 0;
+        }
     }
-
 
     /**
      * @param {number} delta 
@@ -158,16 +188,16 @@ export class Bee {
      */
     move(delta, currTime) {
         // don't move if the mesh is not loaded
-        if (!this.mesh || !this.target) {
+        if (!this.group || !this.target) {
             return;
         }
 
-        this.mesh.lookAt(this.target.position);
-        const distance = this.mesh.position.distanceTo(this.target.position);
+        this.group.lookAt(this.target.position);
+        const distance = this.group.position.distanceTo(this.target.position);
         const step = EMPTY_BEE_SPEED * delta * 24 * MILES_TO_UNIT; // X mi/hr * 1/day * 24hr/day * y units/mi ==> speed in units/day
 
         if (distance < step) {
-            this.mesh.position.copy(this.target.position);
+            this.group.position.copy(this.target.position);
             this.target.beesPresent += 1;
 
             if (!this.goingHome) {
@@ -178,8 +208,8 @@ export class Bee {
                 this.target = this.getNewTarget(currTime);
             }
         } else {
-            const direction = new THREE.Vector3().subVectors(this.target.position, this.mesh.position).normalize();
-            this.mesh.position.addScaledVector(direction, step);
+            const direction = new THREE.Vector3().subVectors(this.target.position, this.group.position).normalize();
+            this.group.position.addScaledVector(direction, step);
             this.position.addScaledVector(direction, step);
         }
 
