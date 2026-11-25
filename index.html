@@ -17,7 +17,7 @@
   <script src="https://kit.fontawesome.com/2b62b7b9ba.js" crossorigin="anonymous"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link rel="stylesheet" type="text/css" href="styles.css" />
-  <script type="module" crossorigin src="/beelaunay/assets/index-DmZllI9o.js"></script>
+  <script type="module" crossorigin src="/beelaunay/assets/index-CQu-FcVb.js"></script>
 </head>
 
 <body>
@@ -42,67 +42,90 @@
               <hr>
               <div class="row justify-content-center">
                 <div class="col-3" id="parameter-input">
-                  <div>
-                    <label for="num-patches-range">Number of Flower Patches:</label>
-                    <input type="range" id="num-patches-range" min="2" max="120" step="1" , value="80">
-                    <input type="number" id="num-patches-number" min="2" max="120" value="80">
+                  <div class="row">
+                    <div class="col">
+                      <div class="row mb-1">
+                        <label for="num-patches-range">Number of Flower Patches:</label>
+                      </div>
+                      <div class="row">
+                        <div class="col-9">
+                          <input class="w-100 h-100" type="range" id="num-patches-range" min="2" max="120" step="1" ,
+                            value="80">
+                        </div>
+                        <div class="col-3">
+                          <input type="number" id="num-patches-number" min="2" max="120" value="80">
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <script>
-                    $(function () {
-                      const $rangeInput = $("#num-patches-range");
-                      const $numberInput = $("#num-patches-number");
-                      $rangeInput.on("input", function () {
-                        $numberInput.val($(this).val());
-                      });
-                      $numberInput.on("input", function () {
-                        let val = Number($(this).val());
-                        val = Math.min(Math.max(2, val), 120);
-                        $rangeInput.val(val);
-                      });
-                      $numberInput.on("blur", function() {
-                        if ($numberInput.val() === '' || Number($numberInput.val() < 2)) {
-                          $numberInput.val(2);
-                        } else if (Number($numberInput.val()) > 120) {
-                          $numberInput.val(120);
-                        } 
-                        $rangeInput.val($numberInput.val());
-                      })
-                    });
-                  </script>
-                  <div>
-                    <label for="num-bees-range">Number of Bees:</label>
-                    <input type="range" id="num-bees-range" min="2" max="40" step="1" , value="10">
-                    <input type="number" id="num-bees-number" min="2" max="40" value="10">
+                  <div class="row">
+                    <div class="col">
+                      <div class="row mb-1 mt-2">
+                        <label for="num-bees-range">Number of Bees:</label>
+                      </div>
+                      <div class="row">
+                        <div class="col-9">
+                          <input class="w-100 h-100" type="range" id="num-bees-range" min="2" max="60" step="1" ,
+                            value="20">
+                        </div>
+                        <div class="col-3">
+                          <input type="number" id="num-bees-number" min="2" max="60" value="20">
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <script>
-                    const rangeInput = document.getElementById("num-bees-range");
-                    const numberInput = document.getElementById("num-bees=number");
-                  </script>
-                  <script>
-                    $(function () {
-                      const $rangeInput = $("#num-bees-range");
-                      const $numberInput = $("#num-bees-number");
-                      $rangeInput.on("input", function () {
-                        $numberInput.val($(this).val());
-                      });
-                      $numberInput.on("input", function () {
-                        let val = Number($(this).val());
-                        val = Math.min(Math.max(2, val), 40);
-                        $rangeInput.val(val);
-                      });
-                      $numberInput.on("blur", function() {
-                        if ($numberInput.val() === '' || Number($numberInput.val() < 2)) {
-                          $numberInput.val(2);
-                        } else if (Number($numberInput.val()) > 40) {
-                          $numberInput.val(40);
-                        } 
-                        $rangeInput.val($numberInput.val());
-                      })
+                  <!-- <script>
+                    const patchesRangeInput = document.getElementById("num-patches-range");
+                    const patchesNumberInput = document.getElementById("num-patches-number");
+                    patchesRangeInput.addEventListener("input", () => {
+                      patchesNumberInput.value = patchesRangeInput.value;
                     });
-                  </script>
+                    patchesNumberInput.addEventListener("input", () => {
+                      let val = patchesNumberInput.value;
+                      val = Math.min(Math.max(2, val), 120);
+                      patchesRangeInput.value = val;
+                    });
+                    patchesNumberInput.addEventListener("blur", () => {
+                      if (patchesNumberInput.value === '' || Number(patchesNumberInput.value) < 2) {
+                        patchesNumberInput.value = 2;
+                      } else if (Number(patchesNumberInput.value) > 120) {
+                        patchesNumberInput.value = 120;
+                      }
+                      patchesRangeInput.value = patchesNumberInput.value;
+                    });
+
+                    const beesRangeInput = document.getElementById("num-bees-range");
+                    const beesNumberInput = document.getElementById("num-bees-number");
+                    beesRangeInput.addEventListener("input", () => {
+                      beesNumberInput.value = beesRangeInput.value;
+                    });
+                    beesNumberInput.addEventListener("input", () => {
+                      let val = beesNumberInput.value;
+                      val = Math.min(Math.max(2, val), 60);
+                      beesRangeInput.value = val;
+                    });
+                    beesNumberInput.addEventListener("blur", () => {
+                      if (beesNumberInput.value === '' || Number(beesNumberInput.value) < 2) {
+                        beesNumberInput.value = 2;
+                      } else if (Number(beesNumberInput.value) > 60) {
+                        beesNumberInput.value = 60;
+                      }
+                      beesRangeInput.value = beesNumberInput.value;
+                    });
+                  </script> -->
                   <div class="mt-3">
                     <button id="restart-btn" class="btn btn-primary w-100">Restart Simulation</button>
                   </div>
+                  <div class="row mt-3">
+                    <div class="col">
+                      <label for="active-bee-selection" id="active-bee-selection-label">Active bee (1-20):</label>
+                      <input class="" type="number" id="active-bee-selection" min="1" max="20" value="1">
+                    </div>
+                  </div>
+                  <script>
+                    const activeBeeSelection = document.getElementById("active-bee-selection");
+                  </script>
+
                 </div>
                 <div class="col-9" id="simulation"> <!-- use id to jump to simulation -->
                   <div id="canvas-container"> <!-- only let it run if it is in view -->
