@@ -1,25 +1,31 @@
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/Addons.js';
-import { randFloat, randInt } from 'three/src/math/MathUtils.js';
-import { Patch } from './location';
-import { BEE_COLLECTION_TIME, BEE_NECTAR_CAPACITY, EMPTY_BEE_SPEED, MIN_PER_DAY, MILES_TO_UNIT, WAKE_UP_TIME, SLEEP_TIME } from './parameters';
-import { getVoronoiCells, drawVoronoi } from './voronoi';
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/Addons.js";
+import { randFloat } from "three/src/math/MathUtils.js";
+import { Patch } from "./location";
+import { BEE_COLLECTION_TIME, BEE_NECTAR_CAPACITY, EMPTY_BEE_SPEED, MIN_PER_DAY, MILES_TO_UNIT, WAKE_UP_TIME, SLEEP_TIME, BEE_ALIVE_TIME_OFFSET } from "./parameters";
+import { getVoronoiCells, drawVoronoi } from "./voronoi";
 
+import hobbiesFile from "/hobbies.txt?raw";
+import namesFile from "/names.txt?raw";
 
 export class Bee {
     // Variables for the shared static template model
     static loader = new GLTFLoader();
     static beeTemplate = null;
-    static isLoaded = false;
-    static loadPromise = null;
+    static isModelLoaded = false;
+    static modelPromise = null;
+    static hobbies = hobbiesFile.split(",").map(str => str.trim()).filter(Boolean);
+    static names = namesFile.split(",").map(str => str.trim()).filter(Boolean);;
+    // static isTextLoaded = false;
+    // static textPromise = null;
 
     static loadBeeModel(renderer) {
-        if (Bee.loadPromise) {
-            return Bee.loadPromise;
+        if (Bee.modelPromise) {
+            return Bee.modelPromise;
         }
 
-        Bee.loadPromise = new Promise((resolve, reject) => {
-            Bee.loader.load('bee.glb', (gltf) => {
+        Bee.modelPromise = new Promise((resolve, reject) => {
+            Bee.loader.load("bee.glb", (gltf) => {
                 gltf.scene.children.forEach((child) => {
                     child.rotation.y += -Math.PI / 2;
                 });
@@ -33,7 +39,7 @@ export class Bee {
                 });
                 gltf.scene.scale.set(2, 2, 2);
                 Bee.beeTemplate = gltf.scene;
-                Bee.isLoaded = true;
+                Bee.isModelLoaded = true;
                 resolve(gltf.scene);
             }, undefined, (error) => {
                 console.error(error);
@@ -41,8 +47,47 @@ export class Bee {
             });
         });
 
-        return Bee.loadPromise;
+        return Bee.modelPromise;
     }
+    /*
+        static loadBeeText() {
+            if (Bee.textPromise) {
+                return Bee.textPromise;
+            } 
+            
+            Bee.textPromise = Promise.all([
+                Bee.loadTxt("hobbies.txt", ","),
+                Bee.loadTxt("names.txt", ","),
+            ]).then(([hobbies, names]) => {
+                Bee.hobbies = hobbies;
+                Bee.names = names;
+            });
+    
+            return Bee.textPromise;
+        }
+    
+        /**
+        * @param {string} file The text file to read
+        * @param {string} delimeter The delimeter to use
+        * /
+        static async loadTxt(file, delimeter) {
+            try {
+                console.log(`loading ${file}`);
+                const response = await fetch(file);
+                console.log(`fetched ${file}`);
+                if (!response.ok) {
+                    throw new Error(`${response.status}`);
+                }
+                const text = await response.text();
+                console.log(`retrieved ${file} text`);
+                const list = text.split(delimeter).map(item => item.trim()).filter(Boolean);
+                return list;
+            } catch (error) {
+                console.error(`Failed to load ${file}:`, error);
+                return ["Fail"];
+            }
+        }
+    */
 
     /**
      * @param {THREE.Scene} scene 
@@ -56,7 +101,7 @@ export class Bee {
         this.hive = hive;
         this.patches = patches;
 
-        if (Bee.isLoaded) {
+        if (Bee.isModelLoaded) {
             this.initMesh();
             this.ready = Promise.resolve();
         } else {
@@ -69,8 +114,16 @@ export class Bee {
         this.gatheringNectar = false;
         this.nectarCollected = 0;
         this.nectarTimer = 0;
-        this.wakeUpTime = WAKE_UP_TIME + randFloat(-0.04, 0.04);
-        this.sleepTime = SLEEP_TIME + randFloat(-0.04, 0.04)
+        this.speed = EMPTY_BEE_SPEED;
+        this.asleep = false;
+        this.wakeUpTime = WAKE_UP_TIME + randFloat(-BEE_ALIVE_TIME_OFFSET, BEE_ALIVE_TIME_OFFSET);
+        this.sleepTime = SLEEP_TIME + randFloat(-BEE_ALIVE_TIME_OFFSET, BEE_ALIVE_TIME_OFFSET);
+
+        this.name = Bee.names[Math.floor(Math.random() * Bee.names.length)];
+        this.hobbies = new Set();
+        while (this.hobbies.size < 3) {
+            this.hobbies.add(Bee.hobbies[Math.floor(Math.random() * Bee.hobbies.length)]);
+        }
 
         this.lowerBound = Math.min(frustumSize * 0.1, 10);
         this.upperBound = Math.max(frustumSize * 0.9, frustumSize - 10);
@@ -144,7 +197,7 @@ export class Bee {
     /**
      * @param {number} delta 
      */
-    update(delta, currTime) {
+    update(delta, currTime, activeBeeData) {
         if (this.gatheringNectar) {
             this.nectarTimer += delta;
 
@@ -171,6 +224,31 @@ export class Bee {
         if (this.active_bee) {
             this.voronoi = getVoronoiCells(this.position, this.target, this.patches, currTime);
             drawVoronoi(this.voronoi.cells, this.voronoi.adjacencyMap, this.scene, this.target);
+
+            activeBeeData.name.textContent = this.name;
+
+            const ul = document.createElement("ul");
+            this.hobbies.forEach((hobby) => {
+                const li = document.createElement("li");
+                li.textContent = hobby;
+                ul.appendChild(li);
+            });
+            activeBeeData.hobbies.replaceChildren(ul);
+
+            if (this.asleep) {
+                activeBeeData.target.textContent = "Hive";
+                activeBeeData.nectar.textContent = `${(0).toFixed(2)}%`
+                activeBeeData.nectarProgress.style.setProperty("--percent", 0);
+
+            } else {
+                activeBeeData.target.textContent = this.target === this.hive ? "Hive" : `Flower Patch #${this.target.name}`;
+                const nectarPercent = Math.round(10000 * Math.max(0, Math.min(this.nectarCollected / BEE_NECTAR_CAPACITY, 1))) / 100;
+                activeBeeData.nectar.textContent = `${nectarPercent.toFixed(2)}%`
+                activeBeeData.nectarProgress.style.setProperty("--percent", nectarPercent);
+
+            }
+
+
         }
 
         this.move(delta, currTime);
@@ -181,14 +259,18 @@ export class Bee {
      * @param {number} delta 
      */
     move(delta, currTime) {
-        // don't move if the mesh is not loaded
+        // do not move if the mesh is not loaded
         if (!this.group || !this.target) {
+            return;
+        } 
+
+        if (this.asleep) {
             return;
         }
 
         this.group.lookAt(this.target.position);
         const distance = this.group.position.distanceTo(this.target.position);
-        const step = EMPTY_BEE_SPEED * delta * 24 * MILES_TO_UNIT; // X mi/hr * 1/day * 24hr/day * y units/mi ==> speed in units/day
+        const step = this.speed * delta * 24 * MILES_TO_UNIT; // X mi/hr * 1/day * 24hr/day * y units/mi ==> speed in units/day
 
         if (distance < step) {
             this.group.position.copy(this.target.position);
@@ -214,7 +296,10 @@ export class Bee {
      */
     getNewTarget(currTime) {
         if (this.sleepTime < currTime || currTime < this.wakeUpTime) {
+            this.asleep = true;
             return this.hive;
+        } else {
+            this.asleep = false;
         }
 
         if (this.target != null) {
@@ -250,7 +335,7 @@ export class Bee {
                 // newTarget = this.patches[adjMap[Math.floor(Math.random() * adjMap.length)]];
                 tries -= 1;
                 if (tries <= 0) {
-                    console.log("Couldn't find anyone... going home!");
+                    console.log("Could not find a good patch... going home!");
                     this.goingHome = true;
                     this.gatheringNectar = false;
                     return this.hive;

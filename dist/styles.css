@@ -187,3 +187,35 @@ nav ul li a {
 nav ul li a:hover {
   background-color: #1E3741;
 }
+
+
+
+.progress-circle {
+  --circumference: calc(3.14159 * 40);
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+}
+
+.progress-circle svg {
+  transform: rotate(-90deg);
+}
+
+.progress-circle circle {
+  fill: none;
+  stroke-width: 8px;
+}
+
+.progress-circle .progress-circle-background {
+  stroke: #eeeeee;
+}
+
+.progress-circle .progress-circle-foreground {
+  stroke: #3C575B;
+  stroke-linecap: round;
+  stroke-dasharray: var(--circumference);
+  stroke-dashoffset: calc(var(--circumference) * (1 - var(--percent) / 100));
+  transition: stroke-dashoffset 0.25s ease;
+}

@@ -19,6 +19,13 @@ const beesRangeInput = document.getElementById("num-bees-range");
 const beesNumberInput = document.getElementById("num-bees-number");
 const activeBeeLabel = document.getElementById("active-bee-selection-label");
 const activeBeeSelection = document.getElementById("active-bee-selection");
+const activeBeeData = {
+    name: document.getElementById("bee-name-span"),
+    hobbies: document.getElementById("bee-hobbies-span"),
+    target: document.getElementById("bee-target-span"),
+    nectar: document.getElementById("bee-nectar-span"),
+    nectarProgress: document.getElementById("bee-progress-circle"),
+};
 
 // renderer
 /**
@@ -40,7 +47,7 @@ function getWindowSize(isUpdate) {
 
 const renderer = new THREE.WebGLRenderer();
 const windowSize = getWindowSize(false);
-container.setAttribute("style", `width: ${windowSize}px`);
+container.style.setProperty("style", `width: ${windowSize}px`);
 renderer.setSize(windowSize, windowSize);
 renderer.setPixelRatio(window.devicePixelRatio);
 container.prepend(renderer.domElement);
@@ -63,7 +70,7 @@ window.addEventListener("resize", () => {
     camera.updateProjectionMatrix();
     renderer.setSize(updatedSize, updatedSize);
     console.log(`${container.style.width} => width: ${updatedSize}px`)
-    container.setAttribute("style", `width: ${updatedSize}px`);
+    container.style.setProperty("style", `width: ${updatedSize}px`);
 });
 
 // event listeners for inputs
@@ -125,8 +132,9 @@ activeBeeSelection.addEventListener("blur", () => {
 
 
 function restart() {
+    activeBeeSelection.value = 1;
     activeBeeSelection.max = beesNumberInput.value;
-    activeBeeLabel.innerText = `Active bee (1-${beesNumberInput.value}):`;
+    activeBeeLabel.textContent = `Active bee (1-${beesNumberInput.value}):`;
 
     startSimulation();
 }
@@ -230,14 +238,14 @@ function startSimulation() {
         scene.add(patch.object);
         patches.push(patch);
     }
-    Patch.updateMinDistance(patches);
+    Patch.updateMinMaxDistances(patches);
 
     for (let i = 0; i < numBees; i++) {
         const bee = new Bee(scene, renderer, frustumSize, hive, patches, currTime);
         bees.push(bee);
     }
 
-    bees[0].setActive();
+    bees[Number(activeBeeSelection.value) - 1].setActive();
 
     function animate(time) {
         if (lastTime === 0) {
@@ -261,7 +269,7 @@ function startSimulation() {
             currDay += 1;
         }
 
-        bees.forEach((bee) => { bee.update(deltaDay, currTime) });
+        bees.forEach((bee) => { bee.update(deltaDay, currTime, activeBeeData) });
         patches.forEach((patch) => { patch.update(deltaDay) });
 
 
@@ -272,8 +280,8 @@ function startSimulation() {
 
         directionalLight.intensity = lightLevel * sunIntensity;
 
-        clockTime.innerText = `${String(hour).padStart(2, 0)}:${String(minute).padStart(2, 0)}`;
-        clockDay.innerText = currDay;
+        clockTime.textContent = `${String(hour).padStart(2, 0)}:${String(minute).padStart(2, 0)}`;
+        clockDay.textContent = currDay;
 
         renderer.render(scene, camera);
     }

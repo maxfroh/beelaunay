@@ -36,6 +36,7 @@ export class Patch extends Location {
     static POLLEN = new THREE.Color().setRGB(0.878, 0.741, 0.043);
     static label = 0;
     static minDistance = WORLD_SIZE;
+    static maxDistance = 0;
 
     static reset() {
         Patch.label = 0;
@@ -44,10 +45,15 @@ export class Patch extends Location {
     /**
      * @param {Array<Patch>} patches
      */
-    static updateMinDistance(patches) {
+    static updateMinMaxDistances(patches) {
         for (let i = 0; i < patches.length - 1; i++) {
             for (let j = i + 1; j < patches.length; j++) {
                 Patch.minDistance = Math.min(Patch.minDistance, patches[i].position.distanceTo(patches[j].position));
+                patches[i].minDistance = Math.min(patches[i].minDistance, patches[i].position.distanceTo(patches[j].position));
+                patches[j].minDistance = Math.min(patches[j].minDistance, patches[i].position.distanceTo(patches[j].position));
+                Patch.maxDistance = Math.max(Patch.maxDistance, patches[i].position.distanceTo(patches[j].position));
+                patches[i].maxDistance = Math.max(patches[i].maxDistance, patches[i].position.distanceTo(patches[j].position));
+                patches[j].maxDistance = Math.max(patches[j].maxDistance, patches[i].position.distanceTo(patches[j].position));
             }
         }
     }
@@ -91,6 +97,8 @@ export class Patch extends Location {
         this.nectarLevel = this.nectarBaseLevel;
         this.recoupTimer = 0;
         this.sugarContent = randInt(3, 80) / 100;
+        this.minDistance = WORLD_SIZE;
+        this.maxDistance = 0;
 
         this.circleSegments = 64;
         this.nectarCircleGeometry = new THREE.CircleGeometry(this.radius + 1, this.circleSegments, 0, Math.PI * 2);
@@ -159,17 +167,7 @@ export class Patch extends Location {
             d_min is known :D
             Some constant in [0, 1) can ensure the inequality holds
         */
-        const maxWeight = 0.85 * (Patch.minDistance ** 2);
-
-        const maxDistance = Math.SQRT2 * (WORLD_SIZE - 40);
-        // const maxDistance = Math.max(
-        //     beePosition.distanceTo(new THREE.Vector3(-WORLD_SIZE / 2, Y, -WORLD_SIZE / 2)),
-        //     beePosition.distanceTo(new THREE.Vector3(-WORLD_SIZE / 2, Y, WORLD_SIZE / 2)),
-        //     beePosition.distanceTo(new THREE.Vector3(WORLD_SIZE / 2, Y, -WORLD_SIZE / 2)),
-        //     beePosition.distanceTo(new THREE.Vector3(WORLD_SIZE / 2, Y, WORLD_SIZE / 2))
-        // );
-        // const halfwayDistance = maxDistance * 0.2;
-        const distance = beePosition.distanceTo(this.position);
+        const maxWeight = 0.85 * (this.minDistance ** 2);
 
         const p_h = hive.position;
         const p_t = this.position;
@@ -180,7 +178,7 @@ export class Patch extends Location {
 
         const daylightFactor = this.#getDaylightFactor(p_h, p_t, time);
         const distanceFromBee = beePosition.distanceTo(this.position);
-        const normalizedDistanceFromBee = Math.min(1, distanceFromBee / maxDistance);
+        const normalizedDistanceFromBee = Math.min(1, distanceFromBee / this.maxDistance);
         const distanceFactor = 1 / (1 + Math.pow(4 * normalizedDistanceFromBee, 2));
 
         const nectarFactor = Math.pow(n / size, 2) * Math.min(1, a / 0.5);
@@ -226,8 +224,7 @@ export class Patch extends Location {
         const s2 = 0.02548398;
         const c = 0;
 
-        const maxDistance = (WORLD_SIZE - 20) / 2 * Math.SQRT2;
-        const normalizedDistance = Math.min(1, p_h.distanceTo(p_t) / maxDistance);
+        const normalizedDistance = Math.min(1, p_h.distanceTo(p_t) / this.maxDistance);
         const maxNightShift = 0.005; // add bee speed
         const shiftedK1 = k1 - (normalizedDistance * maxNightShift);
         const shiftedK2 = k2 - (normalizedDistance * maxNightShift);

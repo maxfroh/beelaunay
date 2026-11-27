@@ -1,5 +1,5 @@
 // environment
-export const MIN_PER_DAY = 0.5;
+export const MIN_PER_DAY = 1;
 export const MAX_NUM_BEES = 60;//200;
 export const NUM_PATCHES = 80;
 export const WORLD_SIZE = 400;
@@ -14,8 +14,9 @@ export const BEE_NECTAR_CAPACITY = 2;
 export const BEE_COLLECTION_RATE = 1 / (BEE_COLLECTION_TIME * BEE_NECTAR_CAPACITY);
 export const EMPTY_BEE_SPEED = 20; // 20 mph as maximum speed when unencumbered
 export const FULL_BEE_SPEED = 12; // 12 mph as minimum speed when encumbered
-export const WAKE_UP_TIME = 7 / 24;
-export const SLEEP_TIME = 20 / 24;
+export const WAKE_UP_TIME = 7 / 24; // rise and shine at 7am
+export const SLEEP_TIME = 20 / 24; // bedtime is 8pm
+export const BEE_ALIVE_TIME_OFFSET = 75 / (24 * 60); // vary by 75 minutes
 
 // hive factors
 export const HONEY_PER_LARVA = 1;
