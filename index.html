@@ -40,7 +40,7 @@
               </div>
               <hr>
               <div class="row justify-content-center">
-                <div class="col-md-3 col-xs-8 mb-md-0 mb-3" id="parameter-input">
+                <div class="col-md-4 col-xs-8 mb-md-0 mb-3" id="parameter-input">
                   <div class="row">
                     <div class="col">
                       <div class="row mb-1">
@@ -68,6 +68,21 @@
                         </div>
                         <div class="col-3 d-flex justify-content-center align-items-center">
                           <input class="w-100" type="number" id="num-bees-number" min="2" max="60" value="20">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col">
+                      <div class="row mb-1 mt-2">
+                        <label for="max-nectar-range">Maximum Nectar Content:</label>
+                      </div>
+                      <div class="row">
+                        <div class="col-9 d-flex justify-content-center align-items-center">
+                          <input class="w-100" type="range" id="max-nectar-range" min="2" max="14" step="1" , value="8">
+                        </div>
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                          <input class="w-100" type="number" id="max-nectar-number" min="2" max="14" value="8">
                         </div>
                       </div>
                     </div>
@@ -116,7 +131,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-md-9 col-xs-12" id="simulation"> <!-- use id to jump to simulation -->
+                <div class="col-md-8 col-xs-12" id="simulation"> <!-- use id to jump to simulation -->
                   <div id="canvas-container"> <!-- only let it run if it is in view -->
                     <div id="clock-text">
                       Day <span id="current-day">0</span> <span id="current-time">00:00</span>

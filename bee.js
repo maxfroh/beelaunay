@@ -264,10 +264,6 @@ export class Bee {
             return;
         } 
 
-        if (this.asleep) {
-            return;
-        }
-
         this.group.lookAt(this.target.position);
         const distance = this.group.position.distanceTo(this.target.position);
         const step = this.speed * delta * 24 * MILES_TO_UNIT; // X mi/hr * 1/day * 24hr/day * y units/mi ==> speed in units/day

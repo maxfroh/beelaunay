@@ -3,7 +3,7 @@ import PoissonDiskSampling from "poisson-disk-sampling";
 
 import { Hive, Patch } from "./location.js";
 import { Bee } from "./bee.js";
-import { MAX_NUM_BEES, NUM_PATCHES, MIN_PER_DAY, WORLD_SIZE, MIN_PATCH_DISTANCE } from "./parameters.js";
+import { MAX_NUM_BEES, NUM_PATCHES, MIN_PER_DAY, WORLD_SIZE, MIN_PATCH_DISTANCE, MAX_SIZE } from "./parameters.js";
 
 
 // persistent DOM queries
@@ -17,6 +17,8 @@ const patchesRangeInput = document.getElementById("num-patches-range");
 const patchesNumberInput = document.getElementById("num-patches-number");
 const beesRangeInput = document.getElementById("num-bees-range");
 const beesNumberInput = document.getElementById("num-bees-number");
+const nectarRangeInput = document.getElementById("max-nectar-range");
+const nectarNumberInput = document.getElementById("max-nectar-number");
 const activeBeeLabel = document.getElementById("active-bee-selection-label");
 const activeBeeSelection = document.getElementById("active-bee-selection");
 const activeBeeData = {
@@ -107,6 +109,25 @@ beesNumberInput.addEventListener("blur", () => {
         beesNumberInput.value = MAX_NUM_BEES;
     }
     beesRangeInput.value = beesNumberInput.value;
+});
+
+const MAX_NECTAR_AMOUNT = MAX_SIZE * 2;
+nectarRangeInput.max = MAX_NECTAR_AMOUNT;
+nectarRangeInput.addEventListener("input", () => {
+    nectarNumberInput.value = nectarRangeInput.value;
+});
+nectarNumberInput.addEventListener("input", () => {
+    let val = nectarNumberInput.value;
+    val = Math.min(Math.max(2, val), MAX_NECTAR_AMOUNT);
+    nectarRangeInput.value = val;
+});
+nectarNumberInput.addEventListener("blur", () => {
+    if (nectarNumberInput.value === '' || Number(nectarNumberInput.value) < 2) {
+        nectarNumberInput.value = 2;
+    } else if (Number(nectarNumberInput.value) > MAX_NECTAR_AMOUNT) {
+        nectarNumberInput.value = MAX_NECTAR_AMOUNT;
+    }
+    nectarRangeInput.value = nectarNumberInput.value;
 });
 
 activeBeeSelection.addEventListener("input", () => {
@@ -234,7 +255,7 @@ function startSimulation() {
     var point;
     while ((point = p.next()) && patches.length < numPatches) {
         let [x, z] = point;
-        const patch = new Patch(frustumSize, x - frustumSize / 2 + 10, z - frustumSize / 2 + 10);
+        const patch = new Patch(frustumSize, x - frustumSize / 2 + 10, z - frustumSize / 2 + 10, Number(nectarNumberInput.value));
         scene.add(patch.object);
         patches.push(patch);
     }

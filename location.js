@@ -58,7 +58,7 @@ export class Patch extends Location {
         }
     }
 
-    constructor(frustumSize, provided_x, provided_z) {
+    constructor(frustumSize, providedX, providedZ, maxNectar) {
         super();
         this.name = Patch.label;
         Patch.label += 1;
@@ -68,21 +68,21 @@ export class Patch extends Location {
         const centerMargin = frustumSize / 2;
 
         var x;
-        if (provided_x === null) {
+        if (providedX === null) {
             x = centerMargin - randInt(this.lowerBound, this.upperBound);
         } else {
-            x = provided_x;
+            x = providedX;
         }
 
         const y = Y;
 
         var z;
-        if (provided_z === null) {
+        if (providedZ === null) {
             z = centerMargin - randInt(this.lowerBound, this.upperBound);
         } else {
-            z = provided_z;
+            z = providedZ;
         }
-        this.radius = randInt(MIN_SIZE, MAX_SIZE);
+        this.radius = randInt(MIN_SIZE, maxNectar / 2);
         const segments = 6;
 
         this.position = new THREE.Vector3(x, y, z);
