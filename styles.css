@@ -148,12 +148,14 @@ h2.subtitle {
 
 #canvas-container canvas {
   display: block;
+  anchor-name: --canvas-anchor;
 }
 
 #clock-text {
   position: absolute;
-  top: 2%;
-  left: 2%;
+  position-anchor: --canvas-anchor;
+  top: anchor(top);
+  left: calc(anchor(left) + 1%);
   z-index: 2;
   color: #ffffff;
   font-family: monospace;
@@ -187,8 +189,6 @@ nav ul li a {
 nav ul li a:hover {
   background-color: #1E3741;
 }
-
-
 
 .progress-circle {
   --circumference: calc(3.14159 * 40);
